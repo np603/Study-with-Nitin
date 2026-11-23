@@ -11,8 +11,6 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
-  <!-- QRCode.js (Used ONLY on the Website Entry Gateway) -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <script>
     tailwind.config = {
       theme: {
@@ -48,49 +46,9 @@
   <div id="toast-container" class="fixed top-20 right-4 z-50 flex flex-col gap-2 max-w-sm w-full pointer-events-none px-4 sm:px-0"></div>
 
   <!-- ===================================================================== -->
-  <!-- VIEW 0: QR WEBSITE ENTRY GATEWAY (QR USED ONLY TO OPEN THE WEBSITE)   -->
+  <!-- MAIN APPLICATION SHELL                                                -->
   <!-- ===================================================================== -->
-  <section id="view-qr-gate" class="flex-1 flex items-center justify-center p-4 sm:p-6 bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 text-white">
-    <div class="max-w-md w-full bg-white/10 backdrop-blur-md border border-white/15 rounded-3xl p-6 sm:p-8 text-center shadow-2xl">
-      <div class="w-12 h-12 rounded-2xl bg-brand-600 text-white flex items-center justify-center mx-auto mb-4 shadow-lg">
-        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-        </svg>
-      </div>
-
-      <h1 class="text-2xl font-extrabold tracking-tight">EduPulse Study Portal</h1>
-      <p class="text-xs sm:text-sm text-indigo-200 mt-1.5">
-        Scan this QR code with your phone camera to open the website.
-      </p>
-
-      <!-- Scannable QR Code (Purely for opening the website URL) -->
-      <div class="my-6 flex justify-center">
-        <div class="bg-white p-4 rounded-2xl shadow-xl border-4 border-indigo-400/30">
-          <div id="qrcode-container" class="w-44 h-44 flex items-center justify-center"></div>
-        </div>
-      </div>
-
-      <button onclick="openWebsiteFromGate()"
-        class="w-full py-3.5 px-6 rounded-2xl bg-brand-600 hover:bg-brand-500 text-white font-bold text-sm shadow-lg transition flex items-center justify-center gap-2">
-        <span>Open Website</span>
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
-        </svg>
-      </button>
-
-      <div class="mt-5 pt-4 border-t border-white/10 flex items-center justify-between text-xs text-indigo-200">
-        <span>Teacher Access</span>
-        <button onclick="openWebsiteFromGate(); openTeacherPinModal();" class="text-amber-300 hover:text-amber-200 font-bold underline">
-          Teacher Portal (PIN) →
-        </button>
-      </div>
-    </div>
-  </section>
-
-  <!-- ===================================================================== -->
-  <!-- MAIN APPLICATION SHELL (SHOWN AFTER OPENING WEBSITE — NO QR HERE)     -->
-  <!-- ===================================================================== -->
-  <div id="main-app-shell" class="hidden flex-1 flex flex-col">
+  <div id="main-app-shell" class="flex-1 flex flex-col">
 
     <!-- TOP NAVIGATION HEADER -->
     <header class="bg-white border-b border-slate-200 sticky top-0 z-30">
@@ -136,7 +94,7 @@
               class="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl bg-amber-50 hover:bg-amber-100 border border-amber-200 text-amber-900 text-xs font-bold transition">
               <span>📅</span>
               <span class="hidden md:inline">Daily Planner</span>
-              <span id="planner-badge-count" class="px-1.5 py-0.2 rounded-full bg-amber-200 text-amber-900 text-[10px] font-extrabold">0</span>
+              <span id="planner-badge-count" class="px-1.5 py-0.5 rounded-full bg-amber-200 text-amber-900 text-[10px] font-extrabold">0</span>
             </button>
 
             <!-- 3. Student Profile Button (Top Right Corner) -->
@@ -162,14 +120,14 @@
     </header>
 
     <!-- =================================================================== -->
-    <!-- VIEW 1: SECTION & COURSE SELECTION (CLEAN — NO QR INVOLVED HERE)    -->
+    <!-- VIEW 1: SECTION & COURSE SELECTION (DIRECT ENTRY ON LINK OPEN)      -->
     <!-- =================================================================== -->
     <main id="view-section-select" class="flex-1 max-w-3xl w-full mx-auto px-4 sm:px-6 py-6 sm:py-10">
       <div class="bg-white rounded-3xl border border-slate-200 p-6 sm:p-8 shadow-sm">
         <div class="flex items-center justify-between mb-6">
           <div>
             <h2 class="text-xl sm:text-2xl font-extrabold text-slate-900">Which Section Are You From?</h2>
-            <p class="text-xs sm:text-sm text-slate-500 mt-1">Select your Class/Course, Stream/Branch, and Year to open your personalized student page.</p>
+            <p class="text-xs sm:text-sm text-slate-500 mt-1">Select your Class/Course, Stream/Branch, and Year to open your personalized student workspace.</p>
           </div>
           <span id="wizard-step-badge" class="px-3 py-1 rounded-full bg-brand-50 text-brand-700 text-xs font-bold shrink-0">Step 1 of 4</span>
         </div>
@@ -177,7 +135,7 @@
         <!-- Student Full Name -->
         <div class="mb-5">
           <label class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Your Full Name</label>
-          <input id="student-name-input" type="text" placeholder="Enter your full name (e.g., Rohan Verma)"
+          <input id="student-name-input" type="text" oninput="updateJoinButtonState()" placeholder="Enter your full name (e.g., Rohan Verma)"
             class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 outline-none text-sm font-medium transition" />
         </div>
 
@@ -327,7 +285,7 @@
           <!-- Subject-Wise Breakdown & Goal Bar -->
           <div class="lg:col-span-7 bg-white rounded-3xl border border-slate-200 p-6 shadow-xs">
             <div class="flex items-center justify-between mb-2">
-              <h3 class="font-bold text-slate-900 text-sm">Daily Target Progress (0 / 240 mins)</h3>
+              <h3 id="daily-goal-heading" class="font-bold text-slate-900 text-sm">Daily Target Progress (0 / 240 mins)</h3>
               <span id="daily-goal-percent" class="text-xs font-extrabold text-brand-600">0%</span>
             </div>
             <div class="w-full h-3 bg-slate-100 rounded-full overflow-hidden mb-6">
@@ -817,6 +775,9 @@
   <script>
     /**
      * COMPLETE ACADEMIC DIRECTORY
+     * Covers Class 9th, 10th, 11th, 12th (Maths, Bio, Commerce, Arts, Agriculture)
+     * and College (B.Tech, MBBS, B.Sc, B.Com, BBA, BA, B.Pharma, B.Ed, B.Sc Nursing)
+     * along with all respective branches, departments, years, and subjects.
      */
     const ACADEMIC_DATA = {
       "Class 9th": {
@@ -1008,7 +969,7 @@
     const MATERIAL_TYPES = ["All", "Books", "Notes", "Formula", "Short Notes", "Mindmaps", "PYQs", "Model Paper", "Tests"];
     const TEACHER_PIN = "2026";
 
-    // Zero-initialized state
+    // Zero-initialized state on launch
     let state = {
       hasJoinedSection: false,
       studentName: "",
@@ -1044,6 +1005,9 @@
       checkedInStudents: []
     };
 
+    /**
+     * Toast Notification Helper (Replaces alert/confirm)
+     */
     function showToast(message, type = "info") {
       const container = document.getElementById("toast-container");
       const toast = document.createElement("div");
@@ -1060,163 +1024,160 @@
       }, 4000);
     }
 
-    // =====================================================================
-    // QR CODE ENTRY GATEWAY (USED STRICTLY TO OPEN THE WEBSITE)
-    // =====================================================================
-    function initQRCode() {
-      const qrContainer = document.getElementById("qrcode-container");
-      qrContainer.innerHTML = "";
-      try {
-        const baseUrl = window.location.href.split("?")[0];
-        const entryUrl = `${baseUrl}?entered=1`;
-        if (typeof QRCode !== "undefined") {
-          new QRCode(qrContainer, {
-            text: entryUrl,
-            width: 168,
-            height: 168,
-            colorDark: "#0f172a",
-            colorLight: "#ffffff",
-            correctLevel: QRCode.CorrectLevel.M
-          });
-        } else {
-          throw new Error("QRCode unavailable");
-        }
-      } catch (e) {
-        qrContainer.innerHTML = `<svg viewBox="0 0 100 100" class="w-40 h-40 text-slate-900" fill="currentColor"><rect x="10" y="10" width="25" height="25" rx="3"/><rect x="65" y="10" width="25" height="25" rx="3"/><rect x="10" y="65" width="25" height="25" rx="3"/><rect x="45" y="45" width="15" height="15"/><rect x="70" y="65" width="20" height="20"/></svg>`;
-      }
-    }
-
-    // Closes the QR gateway completely and opens the main website
-    function openWebsiteFromGate() {
-      document.getElementById("view-qr-gate").classList.add("hidden");
-      document.getElementById("main-app-shell").classList.remove("hidden");
-      renderSectionWizard();
+    function escapeHtml(str) {
+      return String(str)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
     }
 
     // =====================================================================
-    // SECTION & COURSE SELECTION WIZARD (NO QR CODE HERE)
+    // SECTION & COURSE SELECTION WIZARD
     // =====================================================================
     function renderSectionWizard() {
       const levelContainer = document.getElementById("level-options");
-      levelContainer.innerHTML = Object.keys(ACADEMIC_DATA).map(lvl => {
-        const active = state.selectedLevel === lvl;
+      levelContainer.innerHTML = Object.keys(ACADEMIC_DATA).map(level => {
+        const active = state.selectedLevel === level;
         return `
-          <button type="button" onclick="selectLevel('${lvl}')"
-            class="py-3 px-3 rounded-xl border text-xs sm:text-sm font-bold transition text-center ${active ? 'border-brand-600 bg-brand-600 text-white shadow-xs' : 'border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-700'}">
-            ${lvl}
+          <button type="button" onclick="selectLevel('${level}')"
+            class="py-3 px-3 rounded-2xl border-2 text-xs sm:text-sm font-bold transition ${active ? 'border-brand-600 bg-brand-50 text-brand-700' : 'border-slate-200 bg-white text-slate-700 hover:border-brand-300'}">
+            ${level}
           </button>
         `;
       }).join("");
 
-      const step2Box = document.getElementById("step-2-container");
-      const step3Box = document.getElementById("step-3-container");
-      const step4Box = document.getElementById("step-4-container");
-      const previewBox = document.getElementById("subject-preview-box");
-      const joinBtn = document.getElementById("join-cohort-btn");
-
-      if (!state.selectedLevel) {
-        step2Box.classList.add("hidden");
-        step3Box.classList.add("hidden");
-        step4Box.classList.add("hidden");
-        previewBox.classList.add("hidden");
-        joinBtn.disabled = true;
-        return;
-      }
-
-      const levelObj = ACADEMIC_DATA[state.selectedLevel];
-      document.getElementById("step-2-label").textContent = levelObj.step2Label;
-      step2Box.classList.remove("hidden");
-      document.getElementById("wizard-step-badge").textContent = "Step 2 of 4";
-
-      const courseContainer = document.getElementById("course-options");
-      courseContainer.innerHTML = Object.keys(levelObj.courses).map(course => {
-        const active = state.selectedCourse === course;
-        return `
-          <button type="button" onclick="selectCourse('${course}')"
-            class="py-2.5 px-3 rounded-xl border text-xs font-bold transition text-left ${active ? 'border-brand-600 bg-brand-50 text-brand-700 ring-1 ring-brand-600' : 'border-slate-200 hover:border-slate-300 text-slate-700'}">
-            ${course}
-          </button>
-        `;
-      }).join("");
-
-      if (!state.selectedCourse || !levelObj.courses[state.selectedCourse]) {
-        step3Box.classList.add("hidden");
-        step4Box.classList.add("hidden");
-        previewBox.classList.add("hidden");
-        joinBtn.disabled = true;
-        return;
-      }
-
-      const courseObj = levelObj.courses[state.selectedCourse];
-      document.getElementById("step-3-label").textContent = courseObj.step3Label;
-      step3Box.classList.remove("hidden");
-      document.getElementById("wizard-step-badge").textContent = "Step 3 of 4";
-
-      const branchContainer = document.getElementById("branch-options");
-      branchContainer.innerHTML = Object.keys(courseObj.branches).map(branch => {
-        const active = state.selectedBranch === branch;
-        return `
-          <button type="button" onclick="selectBranch('${branch}')"
-            class="py-2.5 px-3.5 rounded-xl border text-xs font-bold transition text-left ${active ? 'border-brand-600 bg-brand-50 text-brand-700 ring-1 ring-brand-600' : 'border-slate-200 hover:border-slate-300 text-slate-700'}">
-            ${branch}
-          </button>
-        `;
-      }).join("");
-
-      if (!state.selectedBranch || !courseObj.branches[state.selectedBranch]) {
-        step4Box.classList.add("hidden");
-        previewBox.classList.add("hidden");
-        joinBtn.disabled = true;
-        return;
-      }
-
-      step4Box.classList.remove("hidden");
-      document.getElementById("wizard-step-badge").textContent = "Step 4 of 4";
-      const yearContainer = document.getElementById("year-options");
-      yearContainer.innerHTML = levelObj.years.map(yr => {
-        const active = state.selectedYear === yr;
-        return `
-          <button type="button" onclick="selectYear('${yr}')"
-            class="py-2.5 px-3 rounded-xl border text-xs font-bold transition text-center ${active ? 'border-emerald-600 bg-emerald-600 text-white shadow-xs' : 'border-slate-200 hover:border-slate-300 text-slate-700'}">
-            ${yr}
-          </button>
-        `;
-      }).join("");
-
-      const subjects = courseObj.branches[state.selectedBranch];
-      previewBox.classList.remove("hidden");
-      document.getElementById("subject-preview-pills").innerHTML = subjects.map(sub =>
-        `<span class="px-2.5 py-1 rounded-lg bg-white border border-slate-200 text-xs font-semibold text-slate-700">${sub}</span>`
-      ).join("");
-
-      joinBtn.disabled = !state.selectedYear;
+      updateWizardProgress();
     }
 
-    function selectLevel(lvl) {
-      state.selectedLevel = lvl;
-      const firstCourse = Object.keys(ACADEMIC_DATA[lvl].courses)[0];
-      state.selectedCourse = firstCourse;
-      const firstBranch = Object.keys(ACADEMIC_DATA[lvl].courses[firstCourse].branches)[0];
-      state.selectedBranch = firstBranch;
-      state.selectedYear = ACADEMIC_DATA[lvl].years[0];
+    function selectLevel(level) {
+      state.selectedLevel = level;
+      state.selectedCourse = "";
+      state.selectedBranch = "";
+      state.selectedYear = "";
+
       renderSectionWizard();
+
+      const levelObj = ACADEMIC_DATA[level];
+      const step2 = document.getElementById("step-2-container");
+      const courseContainer = document.getElementById("course-options");
+      document.getElementById("step-2-label").textContent = levelObj.step2Label;
+
+      step2.classList.remove("hidden");
+      document.getElementById("step-3-container").classList.add("hidden");
+      document.getElementById("step-4-container").classList.add("hidden");
+      document.getElementById("subject-preview-box").classList.add("hidden");
+
+      const courses = Object.keys(levelObj.courses);
+      courseContainer.innerHTML = courses.map(course => `
+        <button type="button" onclick="selectCourse('${course.replace(/'/g, "\\'")}')"
+          class="course-opt-btn py-3 px-3.5 rounded-2xl border-2 border-slate-200 bg-white text-slate-700 hover:border-brand-300 text-xs sm:text-sm font-bold text-left transition">
+          ${course}
+        </button>
+      `).join("");
+
+      if (courses.length === 1) {
+        selectCourse(courses[0]);
+      } else {
+        updateWizardProgress();
+      }
     }
 
     function selectCourse(course) {
       state.selectedCourse = course;
-      const firstBranch = Object.keys(ACADEMIC_DATA[state.selectedLevel].courses[course].branches)[0];
-      state.selectedBranch = firstBranch;
-      renderSectionWizard();
+      state.selectedBranch = "";
+      state.selectedYear = "";
+
+      document.querySelectorAll(".course-opt-btn").forEach(btn => {
+        const isSelected = btn.textContent.trim() === course;
+        btn.className = `course-opt-btn py-3 px-3.5 rounded-2xl border-2 text-xs sm:text-sm font-bold text-left transition ${isSelected ? 'border-brand-600 bg-brand-50 text-brand-700' : 'border-slate-200 bg-white text-slate-700 hover:border-brand-300'}`;
+      });
+
+      const courseObj = ACADEMIC_DATA[state.selectedLevel].courses[course];
+      const step3 = document.getElementById("step-3-container");
+      const branchContainer = document.getElementById("branch-options");
+      document.getElementById("step-3-label").textContent = courseObj.step3Label;
+
+      step3.classList.remove("hidden");
+      document.getElementById("step-4-container").classList.add("hidden");
+      document.getElementById("subject-preview-box").classList.add("hidden");
+
+      const branches = Object.keys(courseObj.branches);
+      branchContainer.innerHTML = branches.map(branch => `
+        <button type="button" onclick="selectBranch('${branch.replace(/'/g, "\\'")}')"
+          class="branch-opt-btn py-3 px-4 rounded-2xl border-2 border-slate-200 bg-white text-slate-700 hover:border-brand-300 text-xs sm:text-sm font-bold text-left transition">
+          ${branch}
+        </button>
+      `).join("");
+
+      if (branches.length === 1) {
+        selectBranch(branches[0]);
+      } else {
+        updateWizardProgress();
+      }
     }
 
     function selectBranch(branch) {
       state.selectedBranch = branch;
-      renderSectionWizard();
+      state.selectedYear = "";
+
+      document.querySelectorAll(".branch-opt-btn").forEach(btn => {
+        const isSelected = btn.textContent.trim() === branch;
+        btn.className = `branch-opt-btn py-3 px-4 rounded-2xl border-2 text-xs sm:text-sm font-bold text-left transition ${isSelected ? 'border-brand-600 bg-brand-50 text-brand-700' : 'border-slate-200 bg-white text-slate-700 hover:border-brand-300'}`;
+      });
+
+      const years = ACADEMIC_DATA[state.selectedLevel].years;
+      const step4 = document.getElementById("step-4-container");
+      const yearContainer = document.getElementById("year-options");
+      step4.classList.remove("hidden");
+
+      yearContainer.innerHTML = years.map(yr => `
+        <button type="button" onclick="selectYear('${yr.replace(/'/g, "\\'")}')"
+          class="year-opt-btn py-3 px-3 rounded-2xl border-2 border-slate-200 bg-white text-slate-700 hover:border-brand-300 text-xs sm:text-sm font-bold transition">
+          ${yr}
+        </button>
+      `).join("");
+
+      if (years.length === 1) {
+        selectYear(years[0]);
+      } else {
+        updateWizardProgress();
+      }
     }
 
-    function selectYear(yr) {
-      state.selectedYear = yr;
-      renderSectionWizard();
+    function selectYear(year) {
+      state.selectedYear = year;
+
+      document.querySelectorAll(".year-opt-btn").forEach(btn => {
+        const isSelected = btn.textContent.trim() === year;
+        btn.className = `year-opt-btn py-3 px-3 rounded-2xl border-2 text-xs sm:text-sm font-bold transition ${isSelected ? 'border-brand-600 bg-brand-50 text-brand-700' : 'border-slate-200 bg-white text-slate-700 hover:border-brand-300'}`;
+      });
+
+      const subjects = ACADEMIC_DATA[state.selectedLevel].courses[state.selectedCourse].branches[state.selectedBranch] || [];
+      const previewBox = document.getElementById("subject-preview-box");
+      const previewPills = document.getElementById("subject-preview-pills");
+      previewBox.classList.remove("hidden");
+      previewPills.innerHTML = subjects.map(sub => `
+        <span class="px-3 py-1 rounded-full bg-white border border-slate-200 text-xs font-semibold text-slate-700">${sub}</span>
+      `).join("");
+
+      updateWizardProgress();
+    }
+
+    function updateWizardProgress() {
+      let step = 1;
+      if (state.selectedLevel) step = 2;
+      if (state.selectedCourse) step = 3;
+      if (state.selectedBranch) step = 4;
+      document.getElementById("wizard-step-badge").textContent = `Step ${step} of 4`;
+      updateJoinButtonState();
+    }
+
+    function updateJoinButtonState() {
+      const btn = document.getElementById("join-cohort-btn");
+      const ready = Boolean(state.selectedLevel && state.selectedCourse && state.selectedBranch && state.selectedYear);
+      btn.disabled = !ready;
     }
 
     function completeSectionSelection() {
@@ -1227,41 +1188,52 @@
       const subjects = ACADEMIC_DATA[state.selectedLevel].courses[state.selectedCourse].branches[state.selectedBranch];
       state.activeSubject = subjects[0];
 
+      // Initialize subject study minutes to 0 for each subject in this section
       subjects.forEach(sub => {
-        if (state.subjectMinutes[sub] === undefined) {
+        if (typeof state.subjectMinutes[sub] !== "number") {
           state.subjectMinutes[sub] = 0;
         }
       });
 
-      const cohortLabel = `${state.selectedLevel} • ${state.selectedCourse} • ${state.selectedBranch} • ${state.selectedYear}`;
+      // Register student in analytics with 0 initial minutes if not already added
       const existingIdx = state.checkedInStudents.findIndex(s => s.name === state.studentName);
+      const cohortLabel = `${state.selectedLevel} • ${state.selectedCourse} • ${state.selectedBranch} (${state.selectedYear})`;
       if (existingIdx === -1) {
         state.checkedInStudents.push({
           name: state.studentName,
           cohort: cohortLabel,
-          minutes: state.todayStudyMinutes,
-          tests: state.testsCompleted,
-          avgScore: "0%",
-          status: "Joined (0m)"
+          minutesToday: state.todayStudyMinutes,
+          testsCompleted: state.testsCompleted,
+          avgScore: 0
         });
       } else {
         state.checkedInStudents[existingIdx].cohort = cohortLabel;
       }
 
-      const topTools = document.getElementById("student-topbar-tools");
-      topTools.classList.remove("hidden");
-      topTools.classList.add("flex");
-
-      document.getElementById("header-cohort-sub").textContent = cohortLabel;
+      // Update Topbar & Profile UI
+      const initials = state.studentName.split(" ").map(p => p[0]).join("").toUpperCase().slice(0, 2) || "S";
+      document.getElementById("topbar-avatar-initials").textContent = initials;
       document.getElementById("topbar-student-name").textContent = state.studentName;
-      document.getElementById("topbar-avatar-initials").textContent = state.studentName.charAt(0).toUpperCase();
+      document.getElementById("header-cohort-sub").textContent = cohortLabel;
+      document.getElementById("dashboard-cohort-heading").textContent = cohortLabel;
+      document.getElementById("dept-room-label").textContent = `${state.selectedCourse} — ${state.selectedBranch}`;
+
+      document.getElementById("student-topbar-tools").classList.remove("hidden");
+      document.getElementById("student-topbar-tools").classList.add("flex");
 
       document.getElementById("view-section-select").classList.add("hidden");
       document.getElementById("view-teacher-portal").classList.add("hidden");
       document.getElementById("view-student-dashboard").classList.remove("hidden");
 
-      renderStudentDashboard();
-      showToast(`✅ Welcome ${state.studentName}! Your workspace is ready (0h 0m logged).`, "success");
+      renderSubjectTabs();
+      renderMaterialFilterPills();
+      renderMaterialsList();
+      renderLiveClassesList();
+      renderStudyTrackerUI();
+      renderDiscussionFeed();
+      updatePlannerBadge();
+
+      showToast(`Welcome, ${state.studentName}! Your workspace is ready.`, "success");
     }
 
     function goToSectionSelection() {
@@ -1272,81 +1244,62 @@
     }
 
     // =====================================================================
-    // STUDENT WORKSPACE RENDERING
+    // STUDENT WORKSPACE: TABS, SUBJECTS, MATERIALS, LIVE CLASSES & TRACKER
     // =====================================================================
-    function getActiveCohortSubjects() {
-      return ACADEMIC_DATA[state.selectedLevel].courses[state.selectedCourse].branches[state.selectedBranch];
+    function switchStudentTab(tabName) {
+      state.activeStudentTab = tabName;
+
+      ["materials", "live", "tracker", "rooms"].forEach(t => {
+        const sec = document.getElementById(`student-section-${t}`);
+        const navBtn = document.getElementById(`bottom-nav-${t}`);
+        if (t === tabName) {
+          sec.classList.remove("hidden");
+          navBtn.className = "bottom-nav-btn flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 py-2 px-1 sm:px-3 rounded-2xl bg-brand-50 text-brand-700 font-extrabold transition";
+        } else {
+          sec.classList.add("hidden");
+          navBtn.className = "bottom-nav-btn flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 py-2 px-1 sm:px-3 rounded-2xl text-slate-600 hover:bg-slate-100 font-bold transition";
+        }
+      });
+
+      if (tabName === "materials") renderMaterialsList();
+      if (tabName === "live") renderLiveClassesList();
+      if (tabName === "tracker") renderStudyTrackerUI();
+      if (tabName === "rooms") renderDiscussionFeed();
     }
 
-    function renderStudentDashboard() {
-      document.getElementById("dashboard-cohort-heading").textContent =
-        `${state.selectedLevel} • ${state.selectedCourse} • ${state.selectedBranch} (${state.selectedYear})`;
-
-      document.getElementById("dept-room-label").textContent = `${state.selectedCourse} - ${state.selectedBranch}`;
-
-      const subjects = getActiveCohortSubjects();
-      const tabsContainer = document.getElementById("subject-room-tabs");
-      tabsContainer.innerHTML = subjects.map(sub => {
+    function renderSubjectTabs() {
+      const subjects = ACADEMIC_DATA[state.selectedLevel].courses[state.selectedCourse].branches[state.selectedBranch] || [];
+      const container = document.getElementById("subject-room-tabs");
+      container.innerHTML = subjects.map(sub => {
         const active = state.activeSubject === sub;
         return `
-          <button onclick="selectActiveSubject('${sub}')"
-            class="px-3.5 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition ${active ? 'bg-brand-600 text-white shadow-xs' : 'bg-slate-100 hover:bg-slate-200 text-slate-700'}">
+          <button onclick="selectActiveSubject('${sub.replace(/'/g, "\\'")}')"
+            class="px-3.5 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition ${active ? 'bg-slate-900 text-white shadow-xs' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}">
             ${sub}
           </button>
         `;
       }).join("");
 
-      document.querySelectorAll(".active-subj-name").forEach(el => el.textContent = state.activeSubject);
-
-      renderMaterialFilters();
-      renderStudyMaterials();
-      renderLiveClasses();
-      renderTrackerStats();
-      renderDiscussionFeed();
-    }
-
-    function selectActiveSubject(sub) {
-      state.activeSubject = sub;
-      renderStudentDashboard();
-    }
-
-    function switchStudentTab(tabName) {
-      state.activeStudentTab = tabName;
-      ["materials", "live", "tracker", "rooms"].forEach(t => {
-        const sec = document.getElementById(`student-section-${t}`);
-        const btn = document.getElementById(`bottom-nav-${t}`);
-        if (t === tabName) {
-          sec.classList.remove("hidden");
-          btn.classList.add("bg-brand-50", "text-brand-700");
-          btn.classList.remove("text-slate-600", "hover:bg-slate-100");
-        } else {
-          sec.classList.add("hidden");
-          btn.classList.remove("bg-brand-50", "text-brand-700");
-          btn.classList.add("text-slate-600", "hover:bg-slate-100");
-        }
+      document.querySelectorAll(".active-subj-name").forEach(el => {
+        el.textContent = state.activeSubject;
       });
     }
 
-    // =====================================================================
-    // 1. STUDY MATERIALS (EMPTY UNTIL TEACHER UPLOADS)
-    // =====================================================================
-    function getMaterialsForCurrentSection() {
-      return state.uploadedMaterials.filter(m =>
-        m.level === state.selectedLevel &&
-        m.course === state.selectedCourse &&
-        m.branch === state.selectedBranch &&
-        m.subject === state.activeSubject &&
-        (m.year === "All Years" || m.year === state.selectedYear)
-      );
+    function selectActiveSubject(subject) {
+      state.activeSubject = subject;
+      renderSubjectTabs();
+      renderMaterialsList();
+      renderLiveClassesList();
+      renderStudyTrackerUI();
     }
 
-    function renderMaterialFilters() {
+    function renderMaterialFilterPills() {
       const container = document.getElementById("material-type-filters");
       container.innerHTML = MATERIAL_TYPES.map(type => {
         const active = state.activeMaterialFilter === type;
         return `
           <button onclick="setMaterialFilter('${type}')"
-            class="px-3.5 py-1.5 rounded-full text-xs font-bold whitespace-nowrap border transition ${active ? 'bg-slate-900 text-white border-slate-900' : 'bg-white text-slate-600 border-slate-200 hover:border-slate-300'}">
+            class="px-3.5 py-1.5 rounded-full text-xs font-bold whitespace-nowrap border transition ${active ? 'bg-brand-600 text-white border-brand-600' : 'bg-white text-slate-600 border-slate-200 hover:border-brand-300'}">
             ${type}
           </button>
         `;
@@ -1355,64 +1308,68 @@
 
     function setMaterialFilter(type) {
       state.activeMaterialFilter = type;
-      renderMaterialFilters();
-      renderStudyMaterials();
+      renderMaterialFilterPills();
+      renderMaterialsList();
     }
 
-    function renderStudyMaterials() {
+    function renderMaterialsList() {
       const container = document.getElementById("materials-container");
-      const allForSub = getMaterialsForCurrentSection();
-      const filtered = state.activeMaterialFilter === "All"
-        ? allForSub
-        : allForSub.filter(m => m.type === state.activeMaterialFilter);
+      const matching = state.uploadedMaterials.filter(item => {
+        const sameCohort =
+          item.level === state.selectedLevel &&
+          item.course === state.selectedCourse &&
+          item.branch === state.selectedBranch &&
+          item.year === state.selectedYear &&
+          item.subject === state.activeSubject;
+        const sameType = state.activeMaterialFilter === "All" || item.type === state.activeMaterialFilter;
+        return sameCohort && sameType;
+      });
 
-      if (filtered.length === 0) {
+      if (matching.length === 0) {
         container.innerHTML = `
-          <div class="bg-white rounded-3xl border border-dashed border-slate-300 p-8 sm:p-12 text-center max-w-2xl mx-auto">
-            <div class="w-14 h-14 rounded-2xl bg-slate-100 text-slate-500 flex items-center justify-center text-2xl mx-auto mb-3">📂</div>
-            <h3 class="font-extrabold text-slate-900 text-base sm:text-lg">No Study Materials Uploaded Yet</h3>
-            <p class="text-xs sm:text-sm text-slate-500 mt-1.5 leading-relaxed">
-              Your teacher has not uploaded any <strong>${state.activeMaterialFilter === 'All' ? 'Books, Notes, Formulas, Mindmaps, PYQs, or Tests' : state.activeMaterialFilter}</strong> for <strong>${state.activeSubject}</strong> yet.
+          <div class="bg-white rounded-3xl border border-dashed border-slate-300 p-10 text-center">
+            <div class="w-14 h-14 rounded-2xl bg-slate-100 text-slate-500 flex items-center justify-center text-2xl mx-auto mb-3">📭</div>
+            <h3 class="font-extrabold text-slate-900 text-base">No Study Materials Uploaded Yet</h3>
+            <p class="text-xs sm:text-sm text-slate-500 max-w-md mx-auto mt-1">
+              Your subject teacher has not published any <strong>${state.activeMaterialFilter === 'All' ? 'Books, Notes, Formulas, PYQs, or Tests' : state.activeMaterialFilter}</strong> for <strong>${state.activeSubject}</strong> yet.
             </p>
-            <div class="mt-5 pt-4 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-center gap-2.5">
-              <span class="text-xs text-slate-400">Are you the teacher for this subject?</span>
-              <button onclick="openTeacherPinModal()" class="px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold transition">
-                🔐 Login with Teacher PIN to Upload
-              </button>
-            </div>
+            <button onclick="openTeacherPinModal()" class="mt-4 px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold transition">
+              🔐 Teacher Login to Upload Materials
+            </button>
           </div>
         `;
         return;
       }
 
       const typeIcons = {
-        "Books": "📘", "Notes": "📝", "Formula": "📐", "Short Notes": "⚡",
-        "Mindmaps": "🧠", "PYQs": "📜", "Model Paper": "📄", "Tests": "✅"
+        "Books": "📘",
+        "Notes": "📝",
+        "Formula": "📐",
+        "Short Notes": "⚡",
+        "Mindmaps": "🧠",
+        "PYQs": "📜",
+        "Model Paper": "📄",
+        "Tests": "✅"
       };
 
       container.innerHTML = `
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-          ${filtered.map(item => `
-            <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs hover:shadow-md transition flex flex-col justify-between">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          ${matching.map(item => `
+            <div class="bg-white rounded-2xl border border-slate-200 p-5 flex flex-col justify-between hover:border-brand-300 transition shadow-xs">
               <div>
                 <div class="flex items-center justify-between gap-2 mb-3">
-                  <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-brand-50 text-brand-700 text-xs font-bold">
-                    <span>${typeIcons[item.type] || "📄"}</span>
-                    <span>${item.type}</span>
+                  <span class="px-2.5 py-1 rounded-lg bg-brand-50 text-brand-700 text-xs font-bold">
+                    ${typeIcons[item.type] || "📄"} ${item.type}
                   </span>
                   <span class="text-[11px] text-slate-400 font-medium">${item.uploadedAt}</span>
                 </div>
-                <h3 class="font-bold text-slate-900 text-sm sm:text-base leading-snug">${item.title}</h3>
-                <p class="text-xs text-slate-500 mt-2">Uploaded by <strong class="text-slate-700">${item.faculty}</strong></p>
+                <h4 class="font-extrabold text-slate-900 text-sm sm:text-base leading-snug">${escapeHtml(item.title)}</h4>
+                <p class="text-xs text-slate-500 mt-1.5">By <strong class="text-slate-700">${escapeHtml(item.faculty)}</strong></p>
               </div>
-
-              <div class="mt-5 pt-3.5 border-t border-slate-100 flex items-center justify-between">
-                <span class="text-[11px] font-semibold text-emerald-600">✓ Faculty Verified</span>
-                <button onclick="openMaterialViewer('${item.id}')"
-                  class="px-4 py-2 rounded-xl text-xs font-bold transition ${item.type === 'Tests' ? 'bg-emerald-600 hover:bg-emerald-700 text-white' : 'bg-slate-900 hover:bg-slate-800 text-white'}">
-                  ${item.type === 'Tests' ? 'Attempt Test →' : 'Open & Study'}
-                </button>
-              </div>
+              <button onclick="openMaterialViewer('${item.id}')"
+                class="mt-5 w-full py-2.5 px-4 rounded-xl ${item.type === 'Tests' ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-slate-900 hover:bg-slate-800'} text-white text-xs font-bold transition">
+                ${item.type === 'Tests' ? '▶ Attempt MCQ Test' : '📖 Open & Study'}
+              </button>
             </div>
           `).join("")}
         </div>
@@ -1423,40 +1380,31 @@
       const item = state.uploadedMaterials.find(m => m.id === materialId);
       if (!item) return;
 
-      document.getElementById("viewer-badge").textContent = item.type;
+      document.getElementById("viewer-badge").textContent = `${item.subject} • ${item.type}`;
       document.getElementById("viewer-title").textContent = item.title;
-      document.getElementById("viewer-meta").textContent = `Uploaded by ${item.faculty} • ${item.subject}`;
+      document.getElementById("viewer-meta").textContent = `Published by ${item.faculty} • ${item.uploadedAt}`;
 
       const body = document.getElementById("viewer-body");
-
-      if (item.type === "Tests") {
-        const qText = item.testQuestion?.question || `Core concept evaluation for ${item.subject}`;
-        const correctOpt = item.testQuestion?.correct || "Verified analytical principle";
-        const wrongOpt = item.testQuestion?.wrong || "Unverified assumption";
-
+      if (item.type === "Tests" && item.quiz) {
         body.innerHTML = `
-          <div class="p-3.5 rounded-2xl bg-brand-50 border border-brand-100 text-xs text-brand-900 font-medium">
-            Answer the assessment question below to record your test completion in Your Study Tracker.
-          </div>
-          <form onsubmit="submitUploadedTest(event)" class="space-y-4">
-            <div class="p-4 rounded-2xl border border-slate-200 space-y-2">
-              <p class="font-bold text-slate-900 text-sm">Q1. ${qText}</p>
-              <label class="flex items-center gap-2 text-xs py-1.5 cursor-pointer">
-                <input type="radio" name="ans" value="1" required> <span>${correctOpt}</span>
-              </label>
-              <label class="flex items-center gap-2 text-xs py-1.5 cursor-pointer">
-                <input type="radio" name="ans" value="0" required> <span>${wrongOpt}</span>
-              </label>
+          <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200">
+            <p class="text-xs font-bold uppercase text-brand-600 mb-1">Question 1 of 1</p>
+            <p class="font-bold text-slate-900 text-base mb-4">${escapeHtml(item.quiz.question)}</p>
+            <div class="space-y-2.5" id="quiz-options-box">
+              ${item.quiz.options.map((opt, idx) => `
+                <button type="button" onclick="submitQuizAnswer('${item.id}', ${idx})"
+                  class="w-full text-left p-3.5 rounded-xl border-2 border-slate-200 bg-white hover:border-brand-500 font-semibold text-xs sm:text-sm transition">
+                  ${String.fromCharCode(65 + idx)}. ${escapeHtml(opt)}
+                </button>
+              `).join("")}
             </div>
-            <button type="submit" class="w-full py-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm transition">
-              Submit Test & Sync Score
-            </button>
-          </form>
+            <div id="quiz-result-feedback" class="hidden mt-4 p-3.5 rounded-xl text-xs font-bold"></div>
+          </div>
         `;
       } else {
         body.innerHTML = `
-          <div class="p-5 rounded-2xl bg-slate-50 border border-slate-200 whitespace-pre-line text-sm text-slate-800 leading-relaxed">
-            ${item.content || "Study material provided by your faculty."}
+          <div class="whitespace-pre-wrap bg-slate-50 p-5 rounded-2xl border border-slate-200 text-slate-800 text-sm leading-relaxed">
+            ${escapeHtml(item.content || "No written notes provided.")}
           </div>
         `;
       }
@@ -1464,18 +1412,29 @@
       document.getElementById("modal-material-viewer").classList.remove("hidden");
     }
 
-    function submitUploadedTest(e) {
-      e.preventDefault();
-      const form = new FormData(e.target);
-      const isCorrect = Number(form.get("ans") || 0) === 1;
+    function submitQuizAnswer(materialId, chosenIndex) {
+      const item = state.uploadedMaterials.find(m => m.id === materialId);
+      if (!item || !item.quiz) return;
+
+      const isCorrect = chosenIndex === item.quiz.correctIndex;
       const score = isCorrect ? 100 : 0;
 
       state.testsCompleted += 1;
       state.totalTestScorePercent += score;
-      syncStudentAnalyticsToTeacher();
-      renderTrackerStats();
-      closeMaterialViewer();
-      showToast(`✅ Test submitted! Score: ${score}% recorded in your tracker.`, "success");
+      syncStudentAnalyticsRecord();
+      renderStudyTrackerUI();
+
+      const feedback = document.getElementById("quiz-result-feedback");
+      feedback.classList.remove("hidden");
+      if (isCorrect) {
+        feedback.className = "mt-4 p-3.5 rounded-xl text-xs font-bold bg-emerald-100 text-emerald-900 border border-emerald-300";
+        feedback.textContent = "✅ Correct Answer! Score: 100% recorded in Your Study Tracker.";
+      } else {
+        feedback.className = "mt-4 p-3.5 rounded-xl text-xs font-bold bg-rose-100 text-rose-900 border border-rose-300";
+        feedback.textContent = `❌ Incorrect. Correct option was: ${item.quiz.options[item.quiz.correctIndex]}. Attempt logged in Your Study Tracker.`;
+      }
+
+      document.querySelectorAll("#quiz-options-box button").forEach(btn => btn.disabled = true);
     }
 
     function closeMaterialViewer() {
@@ -1483,26 +1442,28 @@
     }
 
     // =====================================================================
-    // 2. LIVE CLASSES (EMPTY UNTIL TEACHER SCHEDULES)
+    // LIVE CLASSES
     // =====================================================================
-    function renderLiveClasses() {
+    function renderLiveClassesList() {
       const container = document.getElementById("live-classes-container");
-      const matching = state.liveClasses.filter(c =>
-        c.level === state.selectedLevel &&
-        c.course === state.selectedCourse &&
-        c.branch === state.selectedBranch &&
-        c.subject === state.activeSubject
+      const badge = document.getElementById("live-class-count-badge");
+
+      const matching = state.liveClasses.filter(lc =>
+        lc.level === state.selectedLevel &&
+        lc.course === state.selectedCourse &&
+        lc.branch === state.selectedBranch &&
+        lc.subject === state.activeSubject
       );
 
-      document.getElementById("live-class-count-badge").textContent = `${matching.length} Live / Scheduled`;
+      badge.textContent = `${matching.length} Live / Scheduled`;
 
       if (matching.length === 0) {
         container.innerHTML = `
-          <div class="bg-white rounded-3xl border border-dashed border-slate-300 p-8 sm:p-12 text-center max-w-2xl mx-auto">
-            <div class="w-14 h-14 rounded-2xl bg-rose-50 text-rose-600 flex items-center justify-center text-2xl mx-auto mb-3">🎥</div>
-            <h3 class="font-extrabold text-slate-900 text-base sm:text-lg">No Live Classes Scheduled Right Now</h3>
-            <p class="text-xs sm:text-sm text-slate-500 mt-1.5">
-              When your teacher starts a live class for <strong>${state.activeSubject}</strong>, a join card will appear here immediately.
+          <div class="bg-white rounded-3xl border border-dashed border-slate-300 p-10 text-center">
+            <div class="w-14 h-14 rounded-2xl bg-rose-50 text-rose-500 flex items-center justify-center text-2xl mx-auto mb-3">🎥</div>
+            <h3 class="font-extrabold text-slate-900 text-base">No Live Classes Scheduled Right Now</h3>
+            <p class="text-xs sm:text-sm text-slate-500 max-w-md mx-auto mt-1">
+              When your <strong>${state.activeSubject}</strong> teacher starts a live session, it will appear right here.
             </p>
           </div>
         `;
@@ -1511,20 +1472,21 @@
 
       container.innerHTML = `
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          ${matching.map(cls => `
-            <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs flex flex-col justify-between">
+          ${matching.map(lc => `
+            <div class="bg-white rounded-2xl border border-rose-200 p-5 shadow-xs flex flex-col justify-between">
               <div>
                 <div class="flex items-center justify-between mb-2">
                   <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-rose-100 text-rose-700 text-[11px] font-extrabold">
                     <span class="w-2 h-2 rounded-full bg-rose-600 animate-ping"></span> LIVE NOW
                   </span>
-                  <span class="text-xs text-slate-400">${cls.startedAt}</span>
+                  <span class="text-xs text-slate-400">${lc.startedAt}</span>
                 </div>
-                <h4 class="font-extrabold text-slate-900 text-base">${cls.topic}</h4>
-                <p class="text-xs text-slate-500 mt-1">Host: <strong class="text-slate-700">${cls.teacher}</strong> • ${cls.subject}</p>
+                <h4 class="font-extrabold text-slate-900 text-base">${escapeHtml(lc.topic)}</h4>
+                <p class="text-xs text-slate-500 mt-1">Faculty: <strong class="text-slate-700">${escapeHtml(lc.teacher)}</strong></p>
               </div>
-              <button onclick="joinLiveClassSession('${cls.id}')" class="mt-4 w-full py-2.5 px-4 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs transition">
-                Join Live Class & Start Study Clock →
+              <button onclick="joinLiveLecture('${lc.id}')"
+                class="mt-4 w-full py-2.5 px-4 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold transition">
+                ▶ Join Live Class & Start Study Timer
               </button>
             </div>
           `).join("")}
@@ -1532,70 +1494,74 @@
       `;
     }
 
-    function joinLiveClassSession(classId) {
-      const cls = state.liveClasses.find(c => c.id === classId);
-      if (!cls) return;
+    function joinLiveLecture(liveId) {
+      const lc = state.liveClasses.find(item => item.id === liveId);
+      if (!lc) return;
       if (!state.timerRunning) {
         toggleStudyTimer();
       }
-      showToast(`🎥 Joined "${cls.topic}" with ${cls.teacher}! Stopwatch started automatically.`, "success");
+      showToast(`Joined "${lc.topic}" by ${lc.teacher}. Study stopwatch started!`, "success");
     }
 
     // =====================================================================
-    // 3. STUDY STOPWATCH CLOCK & YOUR STUDY TRACKER (ALL ZERO START)
+    // STUDY STOPWATCH & DAILY TRACKER (ZERO INITIALIZED)
     // =====================================================================
-    function formatSeconds(sec) {
-      const hrs = String(Math.floor(sec / 3600)).padStart(2, "0");
-      const mins = String(Math.floor((sec % 3600) / 60)).padStart(2, "0");
-      const secs = String(sec % 60).padStart(2, "0");
+    function formatHMS(totalSeconds) {
+      const hrs = String(Math.floor(totalSeconds / 3600)).padStart(2, "0");
+      const mins = String(Math.floor((totalSeconds % 3600) / 60)).padStart(2, "0");
+      const secs = String(totalSeconds % 60).padStart(2, "0");
       return `${hrs}:${mins}:${secs}`;
     }
 
     function updateStopwatchDisplays() {
-      const formatted = formatSeconds(state.timerSeconds);
+      const formatted = formatHMS(state.timerSeconds);
       document.getElementById("topbar-stopwatch-display").textContent = formatted;
       document.getElementById("tracker-stopwatch-display").textContent = formatted;
+
+      const topToggle = document.getElementById("topbar-stopwatch-toggle");
+      const trackerToggle = document.getElementById("tracker-toggle-btn");
+      const statusText = document.getElementById("tracker-stopwatch-status");
+
+      if (state.timerRunning) {
+        topToggle.textContent = "⏸";
+        trackerToggle.textContent = "⏸ Pause Clock";
+        statusText.textContent = `Counting live for ${state.activeSubject}...`;
+      } else {
+        topToggle.textContent = "▶";
+        trackerToggle.textContent = "▶ Start Clock";
+        statusText.textContent = state.timerSeconds > 0 ? `Paused at ${formatted}` : "Not started yet (0s)";
+      }
     }
 
     function toggleStudyTimer() {
-      const topBtn = document.getElementById("topbar-stopwatch-toggle");
-      const trackerBtn = document.getElementById("tracker-toggle-btn");
-      const statusEl = document.getElementById("tracker-stopwatch-status");
-
       if (state.timerRunning) {
         clearInterval(state.timerInterval);
         state.timerRunning = false;
-        topBtn.textContent = "▶";
-        trackerBtn.textContent = "▶ Resume Clock";
-        statusEl.textContent = "Stopwatch paused";
       } else {
         state.timerRunning = true;
-        topBtn.textContent = "⏸";
-        trackerBtn.textContent = "⏸ Pause Clock";
-        statusEl.textContent = `Recording study time for ${state.activeSubject}...`;
         state.timerInterval = setInterval(() => {
           state.timerSeconds += 1;
           updateStopwatchDisplays();
         }, 1000);
       }
+      updateStopwatchDisplays();
     }
 
     function logStudySession() {
-      if (state.timerSeconds === 0) {
-        showToast("Start the stopwatch clock first to record study time.", "info");
+      if (state.timerSeconds <= 0) {
+        showToast("Start the stopwatch first before saving study time.", "info");
         return;
       }
-      const minsLogged = Math.max(1, Math.round(state.timerSeconds / 60));
-      clearInterval(state.timerInterval);
-      state.timerRunning = false;
+
+      if (state.timerRunning) {
+        clearInterval(state.timerInterval);
+        state.timerRunning = false;
+      }
+
+      const minsEarned = Math.max(1, Math.round(state.timerSeconds / 60));
       state.timerSeconds = 0;
-
+      addStudyMinutesToSubject(state.activeSubject, minsEarned);
       updateStopwatchDisplays();
-      document.getElementById("topbar-stopwatch-toggle").textContent = "▶";
-      document.getElementById("tracker-toggle-btn").textContent = "▶ Start Clock";
-      document.getElementById("tracker-stopwatch-status").textContent = "Saved to today's tracker!";
-
-      addStudyMinutes(minsLogged);
     }
 
     function handleManualStudyLog(e) {
@@ -1603,58 +1569,62 @@
       const input = document.getElementById("manual-mins-input");
       const mins = parseInt(input.value, 10);
       if (!mins || mins <= 0) return;
+
       input.value = "";
-      addStudyMinutes(mins);
+      addStudyMinutesToSubject(state.activeSubject, mins);
     }
 
-    function addStudyMinutes(mins) {
+    function addStudyMinutesToSubject(subject, mins) {
       state.todayStudyMinutes += mins;
-      state.subjectMinutes[state.activeSubject] = (state.subjectMinutes[state.activeSubject] || 0) + mins;
+      state.subjectMinutes[subject] = (state.subjectMinutes[subject] || 0) + mins;
       if (state.todayStudyMinutes > 0 && state.streakDays === 0) {
         state.streakDays = 1;
       }
-      syncStudentAnalyticsToTeacher();
-      renderTrackerStats();
-      showToast(`⏱️ Logged +${mins} mins for ${state.activeSubject}!`, "success");
+
+      syncStudentAnalyticsRecord();
+      renderStudyTrackerUI();
+      showToast(`Saved ${mins} min(s) to ${subject}!`, "success");
     }
 
-    function syncStudentAnalyticsToTeacher() {
+    function syncStudentAnalyticsRecord() {
+      const avgScore = state.testsCompleted > 0 ? Math.round(state.totalTestScorePercent / state.testsCompleted) : 0;
       const idx = state.checkedInStudents.findIndex(s => s.name === state.studentName);
       if (idx !== -1) {
-        const avg = state.testsCompleted > 0 ? Math.round(state.totalTestScorePercent / state.testsCompleted) + "%" : "0%";
-        state.checkedInStudents[idx].minutes = state.todayStudyMinutes;
-        state.checkedInStudents[idx].tests = state.testsCompleted;
-        state.checkedInStudents[idx].avgScore = avg;
-        state.checkedInStudents[idx].status = state.todayStudyMinutes > 0 ? "Active Studying" : "Joined (0m)";
+        state.checkedInStudents[idx].minutesToday = state.todayStudyMinutes;
+        state.checkedInStudents[idx].testsCompleted = state.testsCompleted;
+        state.checkedInStudents[idx].avgScore = avgScore;
       }
     }
 
-    function renderTrackerStats() {
+    function renderStudyTrackerUI() {
       document.getElementById("mini-today-mins").textContent = `${state.todayStudyMinutes} mins`;
       document.getElementById("stat-today-minutes").textContent = `${state.todayStudyMinutes} mins`;
-      document.getElementById("stat-tests-done").textContent = state.testsCompleted;
+      document.getElementById("stat-tests-done").textContent = `${state.testsCompleted}`;
 
-      const avgPercent = state.testsCompleted > 0 ? Math.round(state.totalTestScorePercent / state.testsCompleted) : 0;
-      document.getElementById("stat-avg-score").textContent = `Avg Score: ${avgPercent}%`;
-      document.getElementById("stat-streak-days").textContent = `${state.streakDays} Days`;
+      const avgScore = state.testsCompleted > 0 ? Math.round(state.totalTestScorePercent / state.testsCompleted) : 0;
+      document.getElementById("stat-avg-score").textContent = `Avg Score: ${avgScore}%`;
+      document.getElementById("stat-streak-days").textContent = `${state.streakDays} ${state.streakDays === 1 ? 'Day' : 'Days'}`;
 
       const doneTasks = state.plannerTasks.filter(t => t.done).length;
       document.getElementById("stat-planner-done").textContent = `${doneTasks} / ${state.plannerTasks.length}`;
 
       const goalPercent = Math.min(100, Math.round((state.todayStudyMinutes / 240) * 100));
+      document.getElementById("daily-goal-heading").textContent = `Daily Target Progress (${state.todayStudyMinutes} / 240 mins)`;
       document.getElementById("daily-goal-percent").textContent = `${goalPercent}%`;
       document.getElementById("daily-goal-bar").style.width = `${goalPercent}%`;
 
-      const breakdownContainer = document.getElementById("subject-study-breakdown");
-      const subjects = getActiveCohortSubjects();
-      breakdownContainer.innerHTML = subjects.map(sub => {
-        const m = state.subjectMinutes[sub] || 0;
-        const pct = Math.min(100, Math.round((m / 90) * 100));
+      const subjects = state.hasJoinedSection
+        ? ACADEMIC_DATA[state.selectedLevel].courses[state.selectedCourse].branches[state.selectedBranch]
+        : [];
+      const breakdownEl = document.getElementById("subject-study-breakdown");
+      breakdownEl.innerHTML = subjects.map(sub => {
+        const mins = state.subjectMinutes[sub] || 0;
+        const pct = state.todayStudyMinutes > 0 ? Math.round((mins / state.todayStudyMinutes) * 100) : 0;
         return `
           <div>
-            <div class="flex justify-between text-xs font-semibold mb-1">
+            <div class="flex items-center justify-between text-xs font-bold mb-1">
               <span class="text-slate-700">${sub}</span>
-              <span class="text-slate-500 font-mono">${m} mins</span>
+              <span class="font-mono text-slate-500">${mins} mins (${pct}%)</span>
             </div>
             <div class="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
               <div class="h-full bg-brand-600 rounded-full transition-all duration-300" style="width: ${pct}%"></div>
@@ -1665,131 +1635,53 @@
     }
 
     // =====================================================================
-    // DAILY PLANNER & PROFILE MODALS (TOP-RIGHT CORNER)
-    // =====================================================================
-    function openDailyPlannerModal() {
-      renderPlannerTasks();
-      document.getElementById("modal-daily-planner").classList.remove("hidden");
-    }
-
-    function closeDailyPlannerModal() {
-      document.getElementById("modal-daily-planner").classList.add("hidden");
-    }
-
-    function addPlannerTask(e) {
-      e.preventDefault();
-      const input = document.getElementById("planner-task-input");
-      const text = input.value.trim();
-      if (!text) return;
-
-      state.plannerTasks.push({
-        id: Date.now(),
-        text,
-        subject: state.activeSubject,
-        done: false
-      });
-      input.value = "";
-      renderPlannerTasks();
-      renderTrackerStats();
-    }
-
-    function togglePlannerTask(id) {
-      const task = state.plannerTasks.find(t => t.id === id);
-      if (task) task.done = !task.done;
-      renderPlannerTasks();
-      renderTrackerStats();
-    }
-
-    function deletePlannerTask(id) {
-      state.plannerTasks = state.plannerTasks.filter(t => t.id !== id);
-      renderPlannerTasks();
-      renderTrackerStats();
-    }
-
-    function renderPlannerTasks() {
-      const list = document.getElementById("planner-tasks-list");
-      const total = state.plannerTasks.length;
-      const done = state.plannerTasks.filter(t => t.done).length;
-
-      document.getElementById("planner-badge-count").textContent = total;
-      document.getElementById("planner-summary-text").textContent = `${done} of ${total} tasks completed`;
-
-      if (total === 0) {
-        list.innerHTML = `
-          <div class="text-center py-8 text-xs text-slate-400">
-            Your Daily Planner is empty. Add a study goal above to organize today's session!
-          </div>
-        `;
-        return;
-      }
-
-      list.innerHTML = state.plannerTasks.map(t => `
-        <div class="flex items-center justify-between gap-2 p-3 rounded-xl border ${t.done ? 'bg-emerald-50/60 border-emerald-200' : 'bg-slate-50 border-slate-200'}">
-          <label class="flex items-center gap-2.5 cursor-pointer flex-1 min-w-0">
-            <input type="checkbox" ${t.done ? 'checked' : ''} onchange="togglePlannerTask(${t.id})" class="w-4 h-4 rounded text-brand-600" />
-            <div class="truncate">
-              <p class="text-xs sm:text-sm font-semibold ${t.done ? 'line-through text-slate-400' : 'text-slate-800'} truncate">${t.text}</p>
-              <span class="text-[10px] text-slate-400">${t.subject}</span>
-            </div>
-          </label>
-          <button onclick="deletePlannerTask(${t.id})" class="text-slate-400 hover:text-rose-600 text-xs font-bold px-1.5">✕</button>
-        </div>
-      `).join("");
-    }
-
-    function openProfileModal() {
-      document.getElementById("profile-modal-avatar").textContent = (state.studentName || "S").charAt(0).toUpperCase();
-      document.getElementById("profile-modal-name").textContent = state.studentName;
-      document.getElementById("profile-modal-cohort").textContent =
-        `${state.selectedLevel} • ${state.selectedCourse} • ${state.selectedBranch} (${state.selectedYear})`;
-      document.getElementById("profile-modal-mins").textContent = `${state.todayStudyMinutes} mins`;
-      document.getElementById("profile-modal-tests").textContent = state.testsCompleted;
-      document.getElementById("profile-modal-streak").textContent = `${state.streakDays} Days`;
-      document.getElementById("modal-student-profile").classList.remove("hidden");
-    }
-
-    function closeProfileModal() {
-      document.getElementById("modal-student-profile").classList.add("hidden");
-    }
-
-    // =====================================================================
-    // 4. ROOMS (3 SEPARATE ROOMS: STUDENTS ONLY, TEACHER-STUDENT, ALL DEPT)
+    // THREE DISCUSSION ROOMS (STUDENTS-ONLY, TEACHER-STUDENT, ALL DEPT)
     // =====================================================================
     function switchDiscussionRoom(roomKey) {
       state.activeDiscussionRoom = roomKey;
 
-      const c1 = document.getElementById("room-card-students_only");
-      const c2 = document.getElementById("room-card-teacher_student");
-      const c3 = document.getElementById("room-card-all_department");
-      const header = document.getElementById("chat-room-header");
+      const styles = {
+        students_only: {
+          card: "border-emerald-500 bg-emerald-50/70",
+          headerBg: "bg-emerald-900",
+          icon: "🔒",
+          title: "1. Students-Only Room",
+          subtitle: "Private Peer Discussion • Faculty Strictly Blocked",
+          badge: "Section Peers Only"
+        },
+        teacher_student: {
+          card: "border-brand-500 bg-brand-50/70",
+          headerBg: "bg-brand-900",
+          icon: "🎓",
+          title: "2. Teacher-Student Room",
+          subtitle: "Official Classroom Doubt Forum • Students + Faculty",
+          badge: "Verified Faculty Allowed"
+        },
+        all_department: {
+          card: "border-violet-500 bg-violet-50/70",
+          headerBg: "bg-violet-900",
+          icon: "🏛️",
+          title: "3. All Department All Students Room",
+          subtitle: `Cross-Year Community • All ${state.selectedCourse} (${state.selectedBranch}) Students`,
+          badge: "All Years Department"
+        }
+      };
 
-      const baseClass = "text-left p-4 rounded-2xl border-2 border-slate-200 bg-white hover:border-slate-300 transition flex items-start gap-3";
-      c1.className = baseClass;
-      c2.className = baseClass;
-      c3.className = baseClass;
+      ["students_only", "teacher_student", "all_department"].forEach(key => {
+        const card = document.getElementById(`room-card-${key}`);
+        if (key === roomKey) {
+          card.className = `text-left p-4 rounded-2xl border-2 ${styles[key].card} transition flex items-start gap-3`;
+        } else {
+          card.className = "text-left p-4 rounded-2xl border-2 border-slate-200 bg-white hover:border-slate-300 transition flex items-start gap-3";
+        }
+      });
 
-      if (roomKey === "students_only") {
-        c1.className = "text-left p-4 rounded-2xl border-2 border-emerald-500 bg-emerald-50/70 transition flex items-start gap-3";
-        header.className = "px-5 py-3.5 bg-emerald-900 text-white flex items-center justify-between";
-        document.getElementById("chat-header-icon").textContent = "🔒";
-        document.getElementById("chat-header-title").textContent = `Students-Only Room — ${state.activeSubject}`;
-        document.getElementById("chat-header-subtitle").textContent = "Private Peer Discussion • Teachers Strictly Not Allowed";
-        document.getElementById("chat-room-scope-badge").textContent = "Section Students Only";
-      } else if (roomKey === "teacher_student") {
-        c2.className = "text-left p-4 rounded-2xl border-2 border-brand-600 bg-brand-50/70 transition flex items-start gap-3";
-        header.className = "px-5 py-3.5 bg-brand-900 text-white flex items-center justify-between";
-        document.getElementById("chat-header-icon").textContent = "🎓";
-        document.getElementById("chat-header-title").textContent = `Teacher-Student Room — ${state.activeSubject}`;
-        document.getElementById("chat-header-subtitle").textContent = "Official Faculty + Student Doubt Forum";
-        document.getElementById("chat-room-scope-badge").textContent = "Students + Teachers";
-      } else {
-        c3.className = "text-left p-4 rounded-2xl border-2 border-violet-600 bg-violet-50/70 transition flex items-start gap-3";
-        header.className = "px-5 py-3.5 bg-violet-900 text-white flex items-center justify-between";
-        document.getElementById("chat-header-icon").textContent = "🏛️";
-        document.getElementById("chat-header-title").textContent = `All Department All Students — ${state.selectedCourse} (${state.selectedBranch})`;
-        document.getElementById("chat-header-subtitle").textContent = "Cross-Year Department Community (1st to Final Year)";
-        document.getElementById("chat-room-scope-badge").textContent = "All Department";
-      }
+      const cfg = styles[roomKey];
+      document.getElementById("chat-room-header").className = `px-5 py-3.5 ${cfg.headerBg} text-white flex items-center justify-between`;
+      document.getElementById("chat-header-icon").textContent = cfg.icon;
+      document.getElementById("chat-header-title").textContent = cfg.title;
+      document.getElementById("chat-header-subtitle").textContent = cfg.subtitle;
+      document.getElementById("chat-room-scope-badge").textContent = cfg.badge;
 
       renderDiscussionFeed();
     }
@@ -1800,21 +1692,186 @@
 
       if (msgs.length === 0) {
         feed.innerHTML = `
-          <div class="h-full flex flex-col items-center justify-center text-center text-slate-400 px-4">
-            <p class="text-sm font-bold text-slate-600">No messages in this room yet</p>
-            <p class="text-xs mt-1">Start the conversation below with your ${state.activeDiscussionRoom === 'all_department' ? 'department peers' : state.activeDiscussionRoom === 'teacher_student' ? 'teacher and classmates' : 'classmates'}!</p>
+          <div class="h-full flex flex-col items-center justify-center text-center text-slate-400 py-10">
+            <p class="text-2xl mb-2">💬</p>
+            <p class="text-xs sm:text-sm font-bold text-slate-600">No messages in this room yet</p>
+            <p class="text-xs text-slate-400 mt-1">Be the first to start the conversation!</p>
           </div>
         `;
         return;
       }
 
       feed.innerHTML = msgs.map(m => {
-        const isMe = m.sender === state.studentName;
-        const isTeacher = m.role === "teacher";
+        const isMe = m.sender === state.studentName && !m.isTeacher;
         return `
           <div class="flex flex-col ${isMe ? 'items-end' : 'items-start'}">
             <div class="flex items-center gap-1.5 mb-1">
-              <span class="text-[11px] font-bold ${isTeacher ? 'text-brand-700' : 'text-slate-600'}">${m.sender}</span>
-              ${m.tag ? `<span class="px-1.5 py-0.5 rounded bg-slate-200 text-slate-700 text-[9px] font-bold">${m.tag}</span>` : ''}
-              ${isTeacher ? '<span class="px-1.5 py-0.5 rounded bg
-              <html>
+              <span class="text-[11px] font-bold text-slate-700">${escapeHtml(m.sender)}</span>
+              ${m.isTeacher ? '<span class="px-1.5 py-0.5 rounded bg-amber-100 text-amber-800 text-[9px] font-extrabold uppercase">Faculty</span>' : ''}
+              <span class="text-[10px] text-slate-400">${m.time}</span>
+            </div>
+            <div class="px-4 py-2.5 rounded-2xl max-w-[82%] text-xs sm:text-sm ${m.isTeacher ? 'bg-amber-50 border border-amber-200 text-slate-900' : isMe ? 'bg-brand-600 text-white' : 'bg-white border border-slate-200 text-slate-800'}">
+              ${escapeHtml(m.text)}
+            </div>
+          </div>
+        `;
+      }).join("");
+
+      feed.scrollTop = feed.scrollHeight;
+    }
+
+    function sendStudentChatMessage(e) {
+      e.preventDefault();
+      const input = document.getElementById("student-chat-input");
+      const text = input.value.trim();
+      if (!text) return;
+
+      const now = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+      state.messages[state.activeDiscussionRoom].push({
+        sender: state.studentName,
+        isTeacher: false,
+        text,
+        time: now
+      });
+
+      input.value = "";
+      renderDiscussionFeed();
+    }
+
+    // =====================================================================
+    // DAILY PLANNER & STUDENT PROFILE MODALS
+    // =====================================================================
+    function openDailyPlannerModal() {
+      renderPlannerTasks();
+      document.getElementById("modal-daily-planner").classList.remove("hidden");
+    }
+
+    function closeDailyPlannerModal() {
+      document.getElementById("modal-daily-planner").classList.add("hidden");
+      renderStudyTrackerUI();
+    }
+
+    function addPlannerTask(e) {
+      e.preventDefault();
+      const input = document.getElementById("planner-task-input");
+      const title = input.value.trim();
+      if (!title) return;
+
+      state.plannerTasks.push({
+        id: Date.now().toString(),
+        title,
+        done: false
+      });
+
+      input.value = "";
+      updatePlannerBadge();
+      renderPlannerTasks();
+    }
+
+    function togglePlannerTask(taskId) {
+      const task = state.plannerTasks.find(t => t.id === taskId);
+      if (task) task.done = !task.done;
+      updatePlannerBadge();
+      renderPlannerTasks();
+    }
+
+    function deletePlannerTask(taskId) {
+      state.plannerTasks = state.plannerTasks.filter(t => t.id !== taskId);
+      updatePlannerBadge();
+      renderPlannerTasks();
+    }
+
+    function updatePlannerBadge() {
+      const remaining = state.plannerTasks.filter(t => !t.done).length;
+      document.getElementById("planner-badge-count").textContent = remaining;
+    }
+
+    function renderPlannerTasks() {
+      const list = document.getElementById("planner-tasks-list");
+      const summary = document.getElementById("planner-summary-text");
+      const doneCount = state.plannerTasks.filter(t => t.done).length;
+      summary.textContent = `${doneCount} of ${state.plannerTasks.length} tasks completed`;
+
+      if (state.plannerTasks.length === 0) {
+        list.innerHTML = `<p class="text-xs text-slate-400 text-center py-8">No study goals added for today yet. Add your first target above!</p>`;
+        return;
+      }
+
+      list.innerHTML = state.plannerTasks.map(task => `
+        <div class="flex items-center justify-between gap-2 p-3 rounded-xl border ${task.done ? 'bg-emerald-50/60 border-emerald-200' : 'bg-slate-50 border-slate-200'}">
+          <button type="button" onclick="togglePlannerTask('${task.id}')" class="flex items-center gap-2.5 text-left flex-1 min-w-0">
+            <span class="w-5 h-5 rounded-md flex items-center justify-center text-xs font-bold shrink-0 ${task.done ? 'bg-emerald-600 text-white' : 'bg-white border border-slate-300 text-transparent'}">✓</span>
+            <span class="text-xs sm:text-sm font-medium truncate ${task.done ? 'line-through text-slate-400' : 'text-slate-800'}">${escapeHtml(task.title)}</span>
+          </button>
+          <button type="button" onclick="deletePlannerTask('${task.id}')" class="text-xs text-slate-400 hover:text-rose-600 font-bold px-1.5">✕</button>
+        </div>
+      `).join("");
+    }
+
+    function openProfileModal() {
+      const initials = state.studentName.split(" ").map(p => p[0]).join("").toUpperCase().slice(0, 2) || "S";
+      document.getElementById("profile-modal-avatar").textContent = initials;
+      document.getElementById("profile-modal-name").textContent = state.studentName;
+      document.getElementById("profile-modal-cohort").textContent = `${state.selectedLevel} • ${state.selectedCourse} • ${state.selectedBranch} (${state.selectedYear})`;
+      document.getElementById("profile-modal-mins").textContent = `${state.todayStudyMinutes} mins`;
+      document.getElementById("profile-modal-tests").textContent = `${state.testsCompleted}`;
+      document.getElementById("profile-modal-streak").textContent = `${state.streakDays} Days`;
+
+      document.getElementById("modal-student-profile").classList.remove("hidden");
+    }
+
+    function closeProfileModal() {
+      document.getElementById("modal-student-profile").classList.add("hidden");
+    }
+
+    // =====================================================================
+    // TEACHER PORTAL (PIN: 2026) — UPLOAD, LIVE CLASSES, ANALYTICS, CHAT
+    // =====================================================================
+    function openTeacherPinModal() {
+      if (state.isTeacherAuthenticated) {
+        enterTeacherPortal();
+        return;
+      }
+      document.getElementById("teacher-pin-input").value = "";
+      document.getElementById("modal-teacher-pin").classList.remove("hidden");
+    }
+
+    function closeTeacherPinModal() {
+      document.getElementById("modal-teacher-pin").classList.add("hidden");
+    }
+
+    function verifyTeacherPin(e) {
+      e.preventDefault();
+      const entered = document.getElementById("teacher-pin-input").value.trim();
+      if (entered === TEACHER_PIN) {
+        state.isTeacherAuthenticated = true;
+        closeTeacherPinModal();
+        enterTeacherPortal();
+        showToast("Teacher PIN verified. Faculty portal unlocked!", "success");
+      } else {
+        showToast("Invalid Teacher PIN. Please enter 2026.", "error");
+      }
+    }
+
+    function enterTeacherPortal() {
+      document.getElementById("view-section-select").classList.add("hidden");
+      document.getElementById("view-student-dashboard").classList.add("hidden");
+      document.getElementById("view-teacher-portal").classList.remove("hidden");
+
+      populateTeacherDropdowns();
+      renderTeacherAnalytics();
+      renderTeacherChatFeed();
+    }
+
+    function exitTeacherPortal() {
+      document.getElementById("view-teacher-portal").classList.add("hidden");
+      if (state.hasJoinedSection) {
+        document.getElementById("view-student-dashboard").classList.remove("hidden");
+        renderMaterialsList();
+        renderLiveClassesList();
+        renderDiscussionFeed();
+      } else {
+        document.getElementById("view-section-select").classList.remove("hidden");
+      }
+    }
+    <html>
