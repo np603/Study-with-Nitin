@@ -1,0 +1,1833 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>EduPulse QR — Online Study & Daily Cohort Tracker</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Google Fonts: Inter & JetBrains Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+  <!-- QRCode.js for scannable QR generation -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace'],
+          },
+          colors: {
+            brand: {
+              50: '#eef2ff',
+              100: '#e0e7ff',
+              500: '#6366f1',
+              600: '#4f46e5',
+              700: '#4338ca',
+              900: '#312e81',
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #f1f5f9; }
+    ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 9999px; }
+    ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+    .scan-line {
+      animation: scanMove 2.4s ease-in-out infinite;
+    }
+    @keyframes scanMove {
+      0%, 100% { transform: translateY(0px); opacity: 0.85; }
+      50% { transform: translateY(152px); opacity: 1; }
+    }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-800 font-sans antialiased min-h-screen flex flex-col selection:bg-brand-100 selection:text-brand-900">
+
+  <!-- Toast Notification Container (Replaces alert/confirm) -->
+  <div id="toast-container" class="fixed top-20 right-4 z-50 flex flex-col gap-2 max-w-sm w-full pointer-events-none px-4 sm:px-0"></div>
+
+  <!-- ===================================================================== -->
+  <!-- TOP NAVIGATION HEADER (WITH STOPWATCH, DAILY PLANNER & PROFILE)       -->
+  <!-- ===================================================================== -->
+  <header class="bg-white border-b border-slate-200 sticky top-0 z-30">
+    <div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-2">
+      <!-- Left: Brand Identity & Active Section Pill -->
+      <div class="flex items-center gap-2.5 min-w-0">
+        <div onclick="goToOnboarding()" class="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-br from-brand-600 to-violet-600 flex items-center justify-center text-white shadow-sm cursor-pointer shrink-0">
+          <svg class="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+          </svg>
+        </div>
+        <div class="truncate">
+          <span onclick="goToOnboarding()" class="font-extrabold text-base sm:text-lg tracking-tight text-slate-900 cursor-pointer">EduPulse<span class="text-brand-600">QR</span></span>
+          <p id="header-cohort-sub" class="text-[11px] text-slate-500 truncate hidden sm:block">Scan QR to Join Your Section</p>
+        </div>
+      </div>
+
+      <!-- Top-Right Corner Controls:
+           1. Study Stopwatch Clock
+           2. Daily Planner (beside stopwatch)
+           3. Profile Avatar (top-right corner) -->
+      <div class="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
+
+        <!-- Student Top-Right Tools (Shown once student enters their section page) -->
+        <div id="student-topbar-tools" class="hidden items-center gap-1.5 sm:gap-2">
+
+          <!-- 1. Study Stopwatch Clock -->
+          <div class="flex items-center gap-1.5 bg-slate-900 text-white px-2.5 sm:px-3 py-1.5 rounded-xl shadow-xs border border-slate-800">
+            <span class="text-amber-400 text-xs sm:text-sm" title="Study Stopwatch">⏱️</span>
+            <span id="topbar-stopwatch-display" class="font-mono text-xs sm:text-sm font-bold tracking-wider">00:00:00</span>
+            <button id="topbar-stopwatch-toggle" onclick="toggleStudyTimer()" title="Start / Pause Stopwatch"
+              class="ml-0.5 w-6 h-6 rounded-lg bg-brand-600 hover:bg-brand-500 text-white flex items-center justify-center text-[11px] font-bold transition">
+              ▶
+            </button>
+            <button onclick="logStudySession()" title="Save Stopwatch Time to Tracker"
+              class="w-6 h-6 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white flex items-center justify-center text-[11px] font-bold transition">
+              ✓
+            </button>
+          </div>
+
+          <!-- 2. Daily Planner Button (Beside Stopwatch) -->
+          <button onclick="openDailyPlannerModal()" title="Open Daily Planner"
+            class="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl bg-amber-50 hover:bg-amber-100 border border-amber-200 text-amber-900 text-xs font-bold transition">
+            <span>📅</span>
+            <span class="hidden md:inline">Daily Planner</span>
+            <span id="planner-badge-count" class="px-1.5 py-0.2 rounded-full bg-amber-200 text-amber-900 text-[10px] font-extrabold">0</span>
+          </button>
+
+          <!-- 3. Student Profile Button (Top Right Corner) -->
+          <button onclick="openProfileModal()" title="Student Profile & Section Info"
+            class="flex items-center gap-2 pl-1.5 pr-2.5 py-1 rounded-full bg-slate-100 hover:bg-slate-200 border border-slate-200 transition">
+            <div id="topbar-avatar-initials" class="w-7 h-7 rounded-full bg-brand-600 text-white flex items-center justify-center text-xs font-extrabold">
+              S
+            </div>
+            <span id="topbar-student-name" class="text-xs font-bold text-slate-800 max-w-[75px] sm:max-w-[110px] truncate hidden sm:inline">Student</span>
+          </button>
+        </div>
+
+        <!-- Teacher Portal Access Button (Always accessible with PIN) -->
+        <button id="teacher-portal-btn" onclick="openTeacherPinModal()"
+          class="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold bg-slate-900 text-white hover:bg-slate-800 transition shadow-xs">
+          <svg class="w-3.5 h-3.5 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+          </svg>
+          <span>Teacher PIN</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- ===================================================================== -->
+  <!-- VIEW 1: QR SCAN & SECTION/COURSE ONBOARDING PORTAL                    -->
+  <!-- ===================================================================== -->
+  <main id="view-onboarding" class="flex-1 max-w-6xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-10">
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch">
+
+      <!-- Left Column: Scannable QR Entry Card -->
+      <div class="lg:col-span-5 bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 text-white rounded-3xl p-6 sm:p-8 flex flex-col justify-between shadow-xl relative overflow-hidden">
+        <div class="absolute -top-24 -right-24 w-64 h-64 bg-brand-500/20 rounded-full blur-3xl pointer-events-none"></div>
+
+        <div>
+          <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/10 text-indigo-200 text-xs font-semibold mb-4">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"/></svg>
+            QR Campus Check-In
+          </span>
+          <h1 class="text-2xl sm:text-3xl font-extrabold tracking-tight leading-tight">
+            Scan QR & Select Your Class, Branch & Year
+          </h1>
+          <p class="text-slate-300 text-sm mt-3 leading-relaxed">
+            Every student starts fresh at <strong>0h 0m</strong>. Scan the QR code and select your exact section to open your personal workspace with Study Materials, Live Classes, Study Tracker & Discussion Rooms.
+          </p>
+        </div>
+
+        <!-- Live QR Code Box -->
+        <div class="my-7 flex flex-col items-center">
+          <div class="relative bg-white p-4 rounded-2xl shadow-lg border-4 border-indigo-400/30">
+            <div class="scan-line absolute left-3 right-3 top-4 h-0.5 bg-brand-600 shadow-[0_0_8px_#4f46e5] z-10 pointer-events-none"></div>
+            <div id="qrcode-container" class="w-40 h-40 flex items-center justify-center"></div>
+          </div>
+          <p class="text-xs text-indigo-200 mt-3 font-mono">CAMPUS-QR-GATEWAY</p>
+          <button onclick="simulateQrScan()" class="mt-3 w-full sm:w-auto px-5 py-2.5 rounded-xl bg-white/15 hover:bg-white/25 border border-white/20 text-white text-xs font-semibold flex items-center justify-center gap-2 transition">
+            <span>📷</span>
+            <span>Simulate Student QR Scan</span>
+          </button>
+        </div>
+
+        <div class="pt-4 border-t border-white/10 text-xs text-slate-300 flex items-center justify-between">
+          <span>Are you a Teacher?</span>
+          <button onclick="openTeacherPinModal()" class="text-amber-300 hover:text-amber-200 font-bold underline">
+            Open Teacher Portal (PIN) →
+          </button>
+        </div>
+      </div>
+
+      <!-- Right Column: Step-by-Step Academic Section Selection -->
+      <div class="lg:col-span-7 bg-white rounded-3xl border border-slate-200 p-6 sm:p-8 shadow-sm flex flex-col justify-between">
+        <div>
+          <div class="flex items-center justify-between mb-5">
+            <div>
+              <h2 class="text-xl font-bold text-slate-900">Which Section Are You From?</h2>
+              <p class="text-xs sm:text-sm text-slate-500 mt-0.5">Select your Class/Degree, Stream/Branch & Year to open your personalized page.</p>
+            </div>
+            <span id="wizard-step-badge" class="px-3 py-1 rounded-full bg-brand-50 text-brand-700 text-xs font-bold">Step 1 of 4</span>
+          </div>
+
+          <!-- Student Full Name (Starts empty - no mock prefill) -->
+          <div class="mb-5">
+            <label class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Your Full Name</label>
+            <input id="student-name-input" type="text" placeholder="Enter your full name (e.g., Rohan Verma)"
+              class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 outline-none text-sm font-medium transition" />
+          </div>
+
+          <!-- STEP 1: Class 9th, 10th, 11th, 12th, or College -->
+          <div class="mb-5">
+            <label class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">1. Select Class or College</label>
+            <div id="level-options" class="grid grid-cols-2 sm:grid-cols-5 gap-2.5"></div>
+          </div>
+
+          <!-- STEP 2: Stream (11th/12th) or Degree (College) -->
+          <div id="step-2-container" class="mb-5 hidden">
+            <label id="step-2-label" class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">2. Select Stream / Course</label>
+            <div id="course-options" class="grid grid-cols-2 sm:grid-cols-3 gap-2.5"></div>
+          </div>
+
+          <!-- STEP 3: Branch / Department / Section -->
+          <div id="step-3-container" class="mb-5 hidden">
+            <label id="step-3-label" class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">3. Select Branch / Department / Section</label>
+            <div id="branch-options" class="grid grid-cols-1 sm:grid-cols-2 gap-2.5"></div>
+          </div>
+
+          <!-- STEP 4: Which Year Are You In? -->
+          <div id="step-4-container" class="mb-5 hidden">
+            <label class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">4. Which Year Are You In?</label>
+            <div id="year-options" class="grid grid-cols-2 sm:grid-cols-4 gap-2.5"></div>
+          </div>
+
+          <!-- Preview of Subjects in Selected Section -->
+          <div id="subject-preview-box" class="hidden p-4 rounded-2xl bg-slate-50 border border-slate-200 mb-5">
+            <p class="text-xs font-bold text-slate-600 mb-2">📚 Subjects in Your Section:</p>
+            <div id="subject-preview-pills" class="flex flex-wrap gap-1.5"></div>
+          </div>
+        </div>
+
+        <button id="join-cohort-btn" onclick="completeOnboarding()" disabled
+          class="w-full py-3.5 px-6 rounded-2xl font-bold text-sm text-white bg-brand-600 hover:bg-brand-700 disabled:bg-slate-200 disabled:text-slate-400 disabled:cursor-not-allowed transition shadow-sm flex items-center justify-center gap-2">
+          <span>Enter My Student Workspace</span>
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"/></svg>
+        </button>
+      </div>
+    </div>
+  </main>
+
+  <!-- ===================================================================== -->
+  <!-- VIEW 2: STUDENT PERSONAL PAGE (WITH 4 HORIZONTAL OPTIONS BELOW)       -->
+  <!-- ===================================================================== -->
+  <main id="view-student-dashboard" class="hidden flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 pt-5 pb-28">
+
+    <!-- Active Section & Subject Selector Bar -->
+    <div class="bg-white rounded-2xl border border-slate-200 p-4 mb-5 shadow-xs">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
+        <div>
+          <span class="text-[11px] font-bold uppercase tracking-wider text-brand-600">Your Active Section</span>
+          <h2 id="dashboard-cohort-heading" class="text-sm sm:text-base font-extrabold text-slate-900">B.Tech • CSE • 2nd Year</h2>
+        </div>
+        <div class="flex items-center gap-2 text-xs text-slate-500">
+          <span>Today's Study: <strong id="mini-today-mins" class="text-brand-600 font-mono">0 mins</strong></span>
+          <span>•</span>
+          <button onclick="goToOnboarding()" class="text-brand-600 hover:underline font-semibold">Change Section</button>
+        </div>
+      </div>
+
+      <!-- Subject Tabs within the Section -->
+      <div class="flex items-center gap-2 overflow-x-auto pb-1" id="subject-room-tabs"></div>
+    </div>
+
+    <!-- =================================================================== -->
+    <!-- SECTION 1: STUDY MATERIALS (STARTS COMPLETELY EMPTY UNTIL UPLOADED) -->
+    <!-- =================================================================== -->
+    <section id="student-section-materials" class="space-y-5">
+      <!-- Material Type Filter Pills -->
+      <div class="flex items-center gap-2 overflow-x-auto pb-1" id="material-type-filters"></div>
+
+      <!-- Materials Grid or Honest Empty State -->
+      <div id="materials-container"></div>
+    </section>
+
+    <!-- =================================================================== -->
+    <!-- SECTION 2: LIVE CLASSES (STARTS EMPTY UNTIL TEACHER SCHEDULES)      -->
+    <!-- =================================================================== -->
+    <section id="student-section-live" class="hidden space-y-5">
+      <div class="bg-white rounded-2xl border border-slate-200 p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div>
+          <h3 class="font-extrabold text-slate-900 text-base">Live Classes — <span class="active-subj-name text-brand-600">Subject</span></h3>
+          <p class="text-xs text-slate-500 mt-0.5">Interactive live lectures hosted by your section faculty. Attending automatically logs your study time.</p>
+        </div>
+        <span class="px-3 py-1 rounded-full bg-slate-100 text-slate-700 text-xs font-bold self-start sm:self-auto" id="live-class-count-badge">0 Live / Scheduled</span>
+      </div>
+
+      <div id="live-classes-container"></div>
+    </section>
+
+    <!-- =================================================================== -->
+    <!-- SECTION 3: YOUR STUDY TRACKER (STARTS AT ALL ZEROS)                 -->
+    <!-- =================================================================== -->
+    <section id="student-section-tracker" class="hidden space-y-6">
+      <!-- Top 4 Zero-Initialized KPI Cards -->
+      <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <div class="bg-white rounded-2xl border border-slate-200 p-4 sm:p-5">
+          <p class="text-xs text-slate-500 font-semibold">Today's Study Time</p>
+          <p id="stat-today-minutes" class="text-2xl font-extrabold text-slate-900 mt-1">0 mins</p>
+          <p class="text-[11px] text-slate-400 font-medium mt-1">Daily Goal: 240 mins (4h)</p>
+        </div>
+        <div class="bg-white rounded-2xl border border-slate-200 p-4 sm:p-5">
+          <p class="text-xs text-slate-500 font-semibold">Tests Attended</p>
+          <p id="stat-tests-done" class="text-2xl font-extrabold text-brand-600 mt-1">0</p>
+          <p id="stat-avg-score" class="text-[11px] text-slate-400 font-medium mt-1">Avg Score: 0%</p>
+        </div>
+        <div class="bg-white rounded-2xl border border-slate-200 p-4 sm:p-5">
+          <p class="text-xs text-slate-500 font-semibold">Current Streak</p>
+          <p id="stat-streak-days" class="text-2xl font-extrabold text-amber-600 mt-1">0 Days</p>
+          <p class="text-[11px] text-slate-400 font-medium mt-1">Study today to start streak</p>
+        </div>
+        <div class="bg-white rounded-2xl border border-slate-200 p-4 sm:p-5">
+          <p class="text-xs text-slate-500 font-semibold">Planner Tasks Done</p>
+          <p id="stat-planner-done" class="text-2xl font-extrabold text-emerald-600 mt-1">0 / 0</p>
+          <button onclick="openDailyPlannerModal()" class="text-[11px] text-brand-600 font-bold hover:underline mt-1">Open Daily Planner →</button>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <!-- Stopwatch & Manual Session Logger -->
+        <div class="lg:col-span-5 bg-white rounded-3xl border border-slate-200 p-6 shadow-xs flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between mb-3">
+              <span class="px-3 py-1 rounded-full bg-brand-50 text-brand-700 text-xs font-bold">Stopwatch & Manual Log</span>
+              <span class="active-subj-name text-xs font-semibold text-slate-500">Subject</span>
+            </div>
+
+            <div class="my-4 text-center py-7 rounded-2xl bg-slate-900 text-white">
+              <p class="text-[11px] uppercase tracking-widest text-indigo-300 mb-1">Active Study Stopwatch</p>
+              <div id="tracker-stopwatch-display" class="font-mono text-4xl font-extrabold tracking-wider">00:00:00</div>
+              <p id="tracker-stopwatch-status" class="text-xs text-slate-400 mt-2">Not started yet (0s)</p>
+            </div>
+
+            <div class="grid grid-cols-2 gap-2.5 mb-5">
+              <button onclick="toggleStudyTimer()" id="tracker-toggle-btn" class="py-3 px-4 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-bold text-xs sm:text-sm transition">
+                ▶ Start Clock
+              </button>
+              <button onclick="logStudySession()" class="py-3 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs sm:text-sm transition">
+                ✓ Save to Today
+              </button>
+            </div>
+          </div>
+
+          <!-- Manual Offline Study Logger -->
+          <form onsubmit="handleManualStudyLog(event)" class="pt-4 border-t border-slate-100">
+            <label class="block text-xs font-bold text-slate-600 mb-2">Studied Offline? Log Minutes Manually:</label>
+            <div class="flex items-center gap-2">
+              <input id="manual-mins-input" type="number" min="1" max="600" required placeholder="Minutes (e.g. 45)"
+                class="flex-1 px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm font-medium outline-none focus:border-brand-500" />
+              <button type="submit" class="px-4 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold transition">
+                + Add
+              </button>
+            </div>
+          </form>
+        </div>
+
+        <!-- Subject-Wise Breakdown & Goal Bar -->
+        <div class="lg:col-span-7 bg-white rounded-3xl border border-slate-200 p-6 shadow-xs">
+          <div class="flex items-center justify-between mb-2">
+            <h3 class="font-bold text-slate-900 text-sm">Daily Target Progress (0 / 240 mins)</h3>
+            <span id="daily-goal-percent" class="text-xs font-extrabold text-brand-600">0%</span>
+          </div>
+          <div class="w-full h-3 bg-slate-100 rounded-full overflow-hidden mb-6">
+            <div id="daily-goal-bar" class="h-full bg-gradient-to-r from-brand-500 to-emerald-500 rounded-full transition-all duration-500" style="width: 0%"></div>
+          </div>
+
+          <h4 class="text-xs font-bold uppercase tracking-wider text-slate-500 mb-3">Subject-Wise Study Breakdown Today</h4>
+          <div id="subject-study-breakdown" class="space-y-3.5"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- =================================================================== -->
+    <!-- SECTION 4: ROOMS (3 DISTINCT OPTIONS AS REQUESTED)                  -->
+    <!--   1. Students-Only Room (No Teachers Allowed)                       -->
+    <!--   2. Teacher-Student Room (Students + Faculty)                      -->
+    <!--   3. All Department All Students Room (Whole Dept Cross-Year)       -->
+    <!-- =================================================================== -->
+    <section id="student-section-rooms" class="hidden space-y-5">
+      <!-- Three Room Selector Cards -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-3.5">
+        <!-- Room 1: Students-Only Room -->
+        <button onclick="switchDiscussionRoom('students_only')" id="room-card-students_only"
+          class="text-left p-4 rounded-2xl border-2 border-emerald-500 bg-emerald-50/70 transition flex items-start gap-3">
+          <div class="w-9 h-9 rounded-xl bg-emerald-600 text-white flex items-center justify-center shrink-0 font-bold text-base">🔒</div>
+          <div>
+            <div class="flex flex-wrap items-center gap-1.5">
+              <h3 class="font-extrabold text-slate-900 text-xs sm:text-sm">1. Students-Only Room</h3>
+              <span class="px-2 py-0.5 rounded-full bg-rose-100 text-rose-700 text-[9px] font-extrabold uppercase">No Teachers</span>
+            </div>
+            <p class="text-[11px] text-slate-600 mt-1">Private room for your section peers only. Teachers are strictly blocked.</p>
+          </div>
+        </button>
+
+        <!-- Room 2: Teacher-Student Room -->
+        <button onclick="switchDiscussionRoom('teacher_student')" id="room-card-teacher_student"
+          class="text-left p-4 rounded-2xl border-2 border-slate-200 bg-white hover:border-brand-300 transition flex items-start gap-3">
+          <div class="w-9 h-9 rounded-xl bg-brand-600 text-white flex items-center justify-center shrink-0 font-bold text-base">🎓</div>
+          <div>
+            <div class="flex flex-wrap items-center gap-1.5">
+              <h3 class="font-extrabold text-slate-900 text-xs sm:text-sm">2. Teacher-Student Room</h3>
+              <span class="px-2 py-0.5 rounded-full bg-brand-100 text-brand-700 text-[9px] font-extrabold uppercase">Faculty + Class</span>
+            </div>
+            <p class="text-[11px] text-slate-600 mt-1">Official doubt-solving & announcements with your subject teachers.</p>
+          </div>
+        </button>
+
+        <!-- Room 3: All Department All Students Room -->
+        <button onclick="switchDiscussionRoom('all_department')" id="room-card-all_department"
+          class="text-left p-4 rounded-2xl border-2 border-slate-200 bg-white hover:border-violet-300 transition flex items-start gap-3">
+          <div class="w-9 h-9 rounded-xl bg-violet-600 text-white flex items-center justify-center shrink-0 font-bold text-base">🏛️</div>
+          <div>
+            <div class="flex flex-wrap items-center gap-1.5">
+              <h3 class="font-extrabold text-slate-900 text-xs sm:text-sm">3. All Department All Students</h3>
+              <span class="px-2 py-0.5 rounded-full bg-violet-100 text-violet-700 text-[9px] font-extrabold uppercase">All Years</span>
+            </div>
+            <p class="text-[11px] text-slate-600 mt-1">Connect with seniors & juniors across the entire <span id="dept-room-label" class="font-semibold">Department</span>.</p>
+          </div>
+        </button>
+      </div>
+
+      <!-- Active Room Chat Box -->
+      <div class="bg-white rounded-3xl border border-slate-200 shadow-xs overflow-hidden flex flex-col h-[430px]">
+        <div id="chat-room-header" class="px-5 py-3.5 bg-emerald-900 text-white flex items-center justify-between">
+          <div class="flex items-center gap-2.5">
+            <span id="chat-header-icon">🔒</span>
+            <div>
+              <h4 id="chat-header-title" class="font-bold text-sm">Students-Only Room</h4>
+              <p id="chat-header-subtitle" class="text-[11px] text-emerald-200">Private Peer Discussion • Faculty Blocked</p>
+            </div>
+          </div>
+          <span id="chat-room-scope-badge" class="px-2.5 py-1 rounded-full bg-white/15 text-[11px] font-semibold">Section Peers</span>
+        </div>
+
+        <div id="chat-messages-feed" class="flex-1 p-5 overflow-y-auto space-y-3 bg-slate-50/70"></div>
+
+        <form onsubmit="sendStudentChatMessage(event)" class="p-3.5 bg-white border-t border-slate-200 flex items-center gap-2.5">
+          <input id="student-chat-input" type="text" required placeholder="Write a message in this room..."
+            class="flex-1 px-4 py-2.5 rounded-xl bg-slate-100 focus:bg-white border border-transparent focus:border-brand-500 outline-none text-sm transition" />
+          <button type="submit" class="px-5 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-bold text-sm transition shrink-0">
+            Send
+          </button>
+        </form>
+      </div>
+    </section>
+
+    <!-- =================================================================== -->
+    <!-- FOUR HORIZONTAL OPTIONS IN BELOW (FIXED BOTTOM NAVIGATION BAR)      -->
+    <!-- (1) Study Materials | (2) Live Classes | (3) Your Study Tracker | (4) Rooms -->
+    <!-- =================================================================== -->
+    <nav aria-label="Primary Student Navigation" class="fixed bottom-0 inset-x-0 z-30 bg-white/95 backdrop-blur-md border-t border-slate-200 shadow-[0_-4px_20px_rgba(15,23,42,0.06)]">
+      <div class="max-w-4xl mx-auto px-2 sm:px-6 h-16 sm:h-[72px] grid grid-cols-4 gap-1 sm:gap-3 items-center">
+        <!-- Option 1: Study Materials -->
+        <button onclick="switchStudentTab('materials')" id="bottom-nav-materials"
+          class="bottom-nav-btn flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 py-2 px-1 sm:px-3 rounded-2xl bg-brand-50 text-brand-700 font-extrabold transition">
+          <span class="text-base sm:text-lg">📚</span>
+          <span class="text-[10px] sm:text-xs leading-tight text-center">Study Materials</span>
+        </button>
+
+        <!-- Option 2: Live Classes -->
+        <button onclick="switchStudentTab('live')" id="bottom-nav-live"
+          class="bottom-nav-btn flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 py-2 px-1 sm:px-3 rounded-2xl text-slate-600 hover:bg-slate-100 font-bold transition">
+          <span class="text-base sm:text-lg">🎥</span>
+          <span class="text-[10px] sm:text-xs leading-tight text-center">Live Classes</span>
+        </button>
+
+        <!-- Option 3: Your Study Tracker -->
+        <button onclick="switchStudentTab('tracker')" id="bottom-nav-tracker"
+          class="bottom-nav-btn flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 py-2 px-1 sm:px-3 rounded-2xl text-slate-600 hover:bg-slate-100 font-bold transition">
+          <span class="text-base sm:text-lg">⏱️</span>
+          <span class="text-[10px] sm:text-xs leading-tight text-center">Your Study Tracker</span>
+        </button>
+
+        <!-- Option 4: Rooms -->
+        <button onclick="switchStudentTab('rooms')" id="bottom-nav-rooms"
+          class="bottom-nav-btn flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 py-2 px-1 sm:px-3 rounded-2xl text-slate-600 hover:bg-slate-100 font-bold transition">
+          <span class="text-base sm:text-lg">💬</span>
+          <span class="text-[10px] sm:text-xs leading-tight text-center">Rooms</span>
+        </button>
+      </div>
+    </nav>
+  </main>
+
+  <!-- ===================================================================== -->
+  <!-- VIEW 3: EXCLUSIVE TEACHER PORTAL (PIN PROTECTED - PIN: 2026)          -->
+  <!-- ===================================================================== -->
+  <main id="view-teacher-portal" class="hidden flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
+    <!-- Teacher Portal Banner -->
+    <div class="bg-slate-900 text-white rounded-3xl p-6 mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-md">
+      <div>
+        <div class="flex items-center gap-2 mb-1">
+          <span class="px-2.5 py-0.5 rounded-full bg-amber-400 text-slate-950 text-[11px] font-extrabold uppercase">Teacher Mode Active</span>
+          <span class="text-xs text-slate-400">PIN Verified</span>
+        </div>
+        <h1 class="text-xl sm:text-2xl font-extrabold">Faculty Command Center & Material Publisher</h1>
+        <p class="text-xs sm:text-sm text-slate-300 mt-1">Upload study materials, host live classes, monitor real-time student study hours, and answer doubts in Teacher-Student Rooms.</p>
+      </div>
+      <button onclick="exitTeacherPortal()" class="px-4 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-bold transition self-start sm:self-auto">
+        ← Switch to Student View
+      </button>
+    </div>
+
+    <!-- Teacher Navigation Tabs -->
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 bg-slate-200/70 p-1.5 rounded-2xl mb-6">
+      <button onclick="switchTeacherTab('upload')" id="t-tab-upload"
+        class="teacher-nav-tab py-2.5 px-3 rounded-xl text-xs sm:text-sm font-bold bg-white text-slate-900 shadow-xs transition">
+        📤 Upload Materials
+      </button>
+      <button onclick="switchTeacherTab('host_live')" id="t-tab-host_live"
+        class="teacher-nav-tab py-2.5 px-3 rounded-xl text-xs sm:text-sm font-bold text-slate-600 hover:text-slate-900 transition">
+        🎥 Host Live Class
+      </button>
+      <button onclick="switchTeacherTab('analytics')" id="t-tab-analytics"
+        class="teacher-nav-tab py-2.5 px-3 rounded-xl text-xs sm:text-sm font-bold text-slate-600 hover:text-slate-900 transition">
+        📊 Student Analytics
+      </button>
+      <button onclick="switchTeacherTab('faculty_chat')" id="t-tab-faculty_chat"
+        class="teacher-nav-tab py-2.5 px-3 rounded-xl text-xs sm:text-sm font-bold text-slate-600 hover:text-slate-900 transition">
+        🎓 Teacher-Student Room
+      </button>
+    </div>
+
+    <!-- TEACHER TAB 1: UPLOAD STUDY MATERIALS -->
+    <section id="teacher-section-upload">
+      <div class="bg-white rounded-3xl border border-slate-200 p-6 sm:p-8 shadow-xs max-w-3xl mx-auto">
+        <div class="mb-6">
+          <span class="px-3 py-1 rounded-full bg-brand-50 text-brand-700 text-xs font-bold">Exclusive Teacher Upload Rights</span>
+          <h2 class="text-xl font-extrabold text-slate-900 mt-2">Upload Study Material or Practice Test</h2>
+          <p class="text-xs sm:text-sm text-slate-500">Students see 0 materials until you publish them here for their specific Class/Course, Branch, Year & Subject.</p>
+        </div>
+
+        <form onsubmit="handleTeacherUpload(event)" class="space-y-4">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-xs font-bold text-slate-600 mb-1.5">1. Target Level</label>
+              <select id="up-level" onchange="updateUploadCourses()" required class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm font-medium bg-white"></select>
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-slate-600 mb-1.5">2. Stream / Course</label>
+              <select id="up-course" onchange="updateUploadBranches()" required class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm font-medium bg-white"></select>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div>
+              <label class="block text-xs font-bold text-slate-600 mb-1.5">3. Branch / Section</label>
+              <select id="up-branch" onchange="updateUploadSubjects()" required class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm font-medium bg-white"></select>
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-slate-600 mb-1.5">4. Target Year</label>
+              <select id="up-year" required class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm font-medium bg-white"></select>
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-slate-600 mb-1.5">5. Subject</label>
+              <select id="up-subject" required class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm font-medium bg-white"></select>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-xs font-bold text-slate-600 mb-1.5">6. Material Type</label>
+              <select id="up-type" onchange="toggleTestBuilderFields()" required class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm font-medium bg-white">
+                <option value="Books">📘 Reference Book</option>
+                <option value="Notes">📝 Lecture Notes</option>
+                <option value="Formula">📐 Formula Sheet</option>
+                <option value="Short Notes">⚡ Short Notes</option>
+                <option value="Mindmaps">🧠 Mindmap</option>
+                <option value="PYQs">📜 Previous Year Questions (PYQs)</option>
+                <option value="Model Paper">📄 Model Paper</option>
+                <option value="Tests">✅ Interactive MCQ Test</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-slate-600 mb-1.5">7. Teacher Name</label>
+              <input id="up-faculty" type="text" required placeholder="e.g., Prof. R. K. Verma"
+                class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm font-medium" />
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-xs font-bold text-slate-600 mb-1.5">8. Title</label>
+            <input id="up-title" type="text" required placeholder="e.g., Unit 1 Complete Formula Sheet & Derivations"
+              class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm font-medium" />
+          </div>
+
+          <div id="standard-material-content-box">
+            <label class="block text-xs font-bold text-slate-600 mb-1.5">9. Study Notes / Formulas / Questions Content</label>
+            <textarea id="up-content" rows="4" placeholder="Write the notes, formulas, PYQ solutions, or instructions for your students..."
+              class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm font-medium"></textarea>
+          </div>
+
+          <!-- Optional Custom MCQ Question Builder when Type == 'Tests' -->
+          <div id="test-builder-box" class="hidden p-4 rounded-2xl bg-emerald-50/70 border border-emerald-200 space-y-3">
+            <p class="text-xs font-extrabold text-emerald-900">Create Assessment Question for Students:</p>
+            <input id="test-q1-text" type="text" placeholder="Question 1 (e.g., What is the time complexity of Binary Search?)"
+              class="w-full px-3 py-2 rounded-xl border border-emerald-200 bg-white text-xs font-medium" />
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <input id="test-q1-correct" type="text" placeholder="Correct Option (e.g., O(log n))"
+                class="px-3 py-2 rounded-xl border border-emerald-300 bg-white text-xs font-medium" />
+              <input id="test-q1-wrong" type="text" placeholder="Incorrect Option (e.g., O(n^2))"
+                class="px-3 py-2 rounded-xl border border-slate-200 bg-white text-xs font-medium" />
+            </div>
+          </div>
+
+          <button type="submit" class="w-full py-3.5 px-6 rounded-2xl bg-brand-600 hover:bg-brand-700 text-white font-bold text-sm transition shadow-xs">
+            Publish to Student Section Page
+          </button>
+        </form>
+      </div>
+    </section>
+
+    <!-- TEACHER TAB 2: HOST / SCHEDULE LIVE CLASS -->
+    <section id="teacher-section-host_live" class="hidden">
+      <div class="bg-white rounded-3xl border border-slate-200 p-6 sm:p-8 shadow-xs max-w-2xl mx-auto">
+        <span class="px-3 py-1 rounded-full bg-rose-50 text-rose-700 text-xs font-bold">Live Classroom Broadcaster</span>
+        <h2 class="text-xl font-extrabold text-slate-900 mt-2">Start or Schedule a Live Class</h2>
+        <p class="text-xs sm:text-sm text-slate-500 mb-6">Scheduled classes appear immediately inside the student's <strong>Live Classes</strong> tab.</p>
+
+        <form onsubmit="handleScheduleLiveClass(event)" class="space-y-4">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-xs font-bold text-slate-600 mb-1.5">Target Level</label>
+              <select id="live-level" onchange="updateLiveDropdowns()" required class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm font-medium bg-white"></select>
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-slate-600 mb-1.5">Stream / Course</label>
+              <select id="live-course" onchange="updateLiveBranches()" required class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm font-medium bg-white"></select>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-xs font-bold text-slate-600 mb-1.5">Branch / Section</label>
+              <select id="live-branch" onchange="updateLiveSubjects()" required class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm font-medium bg-white"></select>
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-slate-600 mb-1.5">Subject</label>
+              <select id="live-subject" required class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm font-medium bg-white"></select>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-xs font-bold text-slate-600 mb-1.5">Lecture Topic</label>
+              <input id="live-topic" type="text" required placeholder="e.g., Live Doubt Session & PYQ Walkthrough"
+                class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm font-medium" />
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-slate-600 mb-1.5">Faculty Name</label>
+              <input id="live-teacher" type="text" required placeholder="e.g., Dr. Meera Joshi"
+                class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm font-medium" />
+            </div>
+          </div>
+
+          <button type="submit" class="w-full py-3.5 px-6 rounded-2xl bg-rose-600 hover:bg-rose-700 text-white font-bold text-sm transition">
+            🔴 Go Live Now for Students
+          </button>
+        </form>
+      </div>
+    </section>
+
+    <!-- TEACHER TAB 3: STUDENT PERFORMANCE ANALYTICS (REAL-TIME, ZERO-BASED) -->
+    <section id="teacher-section-analytics" class="hidden space-y-6">
+      <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <div class="bg-white p-5 rounded-2xl border border-slate-200">
+          <p class="text-xs text-slate-500 font-semibold">Checked-In Students</p>
+          <p id="t-stat-students" class="text-2xl font-extrabold text-slate-900 mt-1">0</p>
+          <span class="text-[11px] text-slate-400 font-medium">Via QR Code</span>
+        </div>
+        <div class="bg-white p-5 rounded-2xl border border-slate-200">
+          <p class="text-xs text-slate-500 font-semibold">Logged Study Time</p>
+          <p id="t-stat-minutes" class="text-2xl font-extrabold text-brand-600 mt-1">0 mins</p>
+          <span class="text-[11px] text-slate-400 font-medium">Real-time stopwatch sync</span>
+        </div>
+        <div class="bg-white p-5 rounded-2xl border border-slate-200">
+          <p class="text-xs text-slate-500 font-semibold">Uploaded Materials</p>
+          <p id="t-stat-materials" class="text-2xl font-extrabold text-emerald-600 mt-1">0</p>
+          <span class="text-[11px] text-slate-400 font-medium">Published by faculty</span>
+        </div>
+        <div class="bg-white p-5 rounded-2xl border border-slate-200">
+          <p class="text-xs text-slate-500 font-semibold">Live Classes Hosted</p>
+          <p id="t-stat-live" class="text-2xl font-extrabold text-rose-600 mt-1">0</p>
+          <span class="text-[11px] text-slate-400 font-medium">Active sessions</span>
+        </div>
+      </div>
+
+      <div class="bg-white rounded-3xl border border-slate-200 overflow-hidden shadow-xs">
+        <div class="p-5 border-b border-slate-200">
+          <h3 class="font-bold text-slate-900">Student Daily Study & Test Performance Log</h3>
+          <p class="text-xs text-slate-500">Starts at 0 mins and updates automatically as students use the stopwatch, take tests, and complete planner tasks.</p>
+        </div>
+        <div id="teacher-analytics-table-wrapper" class="overflow-x-auto"></div>
+      </div>
+    </section>
+
+    <!-- TEACHER TAB 4: TEACHER-STUDENT ROOM ONLY -->
+    <section id="teacher-section-faculty_chat" class="hidden space-y-5">
+      <div class="bg-rose-50 border border-rose-200 rounded-2xl p-4 flex items-start gap-3">
+        <span class="text-xl">🔒</span>
+        <div>
+          <h4 class="font-bold text-rose-900 text-sm">Students-Only Room & Department Peer Room Access Restricted</h4>
+          <p class="text-xs text-rose-700 mt-0.5">Teachers can only access the <strong>Teacher-Student Room</strong> below. The <strong>Students-Only Room</strong> is strictly private to students.</p>
+        </div>
+      </div>
+
+      <div class="bg-white rounded-3xl border border-slate-200 shadow-xs overflow-hidden flex flex-col h-[430px]">
+        <div class="px-5 py-3.5 bg-brand-900 text-white flex items-center justify-between">
+          <div>
+            <h4 class="font-bold text-sm">🎓 Teacher-Student Room (Official Doubt & Guidance Forum)</h4>
+            <p class="text-[11px] text-brand-200">Messages appear with Verified Faculty badge</p>
+          </div>
+        </div>
+
+        <div id="teacher-chat-feed" class="flex-1 p-5 overflow-y-auto space-y-3 bg-slate-50"></div>
+
+        <form onsubmit="sendTeacherChatMessage(event)" class="p-3.5 bg-white border-t border-slate-200 flex items-center gap-2.5">
+          <input id="teacher-chat-input" type="text" required placeholder="Post an announcement or answer student doubts..."
+            class="flex-1 px-4 py-2.5 rounded-xl bg-slate-100 focus:bg-white border border-transparent focus:border-brand-500 outline-none text-sm" />
+          <button type="submit" class="px-5 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-sm transition">
+            Send as Teacher
+          </button>
+        </form>
+      </div>
+    </section>
+  </main>
+
+  <!-- ===================================================================== -->
+  <!-- MODAL 1: DAILY PLANNER MODAL (OPENED FROM TOP-RIGHT BESIDE STOPWATCH) -->
+  <!-- ===================================================================== -->
+  <div id="modal-daily-planner" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-slate-200 flex flex-col max-h-[85vh]">
+      <div class="flex items-center justify-between pb-4 border-b border-slate-100">
+        <div class="flex items-center gap-2.5">
+          <span class="w-9 h-9 rounded-xl bg-amber-100 text-amber-800 flex items-center justify-center text-lg">📅</span>
+          <div>
+            <h3 class="font-extrabold text-slate-900 text-base">Today's Study Planner</h3>
+            <p class="text-xs text-slate-500">Plan your daily chapters, revisions & goals</p>
+          </div>
+        </div>
+        <button onclick="closeDailyPlannerModal()" class="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-600 font-bold">✕</button>
+      </div>
+
+      <!-- Add Task Form -->
+      <form onsubmit="addPlannerTask(event)" class="mt-4 flex flex-col sm:flex-row gap-2">
+        <input id="planner-task-input" type="text" required placeholder="e.g., Revise Chapter 2 Formulas (45m)"
+          class="flex-1 px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm font-medium outline-none focus:border-brand-500" />
+        <button type="submit" class="px-4 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-700 text-white text-xs font-bold shrink-0">
+          + Add Goal
+        </button>
+      </form>
+
+      <!-- Task List -->
+      <div id="planner-tasks-list" class="mt-4 flex-1 overflow-y-auto space-y-2 min-h-[140px]"></div>
+
+      <div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
+        <span id="planner-summary-text">0 of 0 tasks completed</span>
+        <button onclick="closeDailyPlannerModal()" class="px-4 py-2 rounded-xl bg-slate-900 text-white font-bold">Done</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================================================================== -->
+  <!-- MODAL 2: STUDENT PROFILE MODAL (OPENED FROM TOP-RIGHT PROFILE ICON)   -->
+  <!-- ===================================================================== -->
+  <div id="modal-student-profile" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-200">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="font-extrabold text-slate-900 text-lg">Student Profile</h3>
+        <button onclick="closeProfileModal()" class="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-600 font-bold">✕</button>
+      </div>
+
+      <div class="flex items-center gap-3.5 p-4 rounded-2xl bg-slate-50 border border-slate-200 mb-4">
+        <div id="profile-modal-avatar" class="w-12 h-12 rounded-2xl bg-brand-600 text-white flex items-center justify-center text-lg font-extrabold shrink-0">S</div>
+        <div class="min-w-0">
+          <h4 id="profile-modal-name" class="font-extrabold text-slate-900 text-base truncate">Student</h4>
+          <p id="profile-modal-cohort" class="text-xs text-slate-600 truncate">Class / Branch / Year</p>
+          <span class="inline-block mt-1 px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-800 text-[10px] font-bold">QR Verified Student</span>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-3 gap-2.5 text-center mb-5">
+        <div class="p-3 rounded-xl bg-slate-50 border border-slate-100">
+          <p class="text-[11px] text-slate-500">Studied Today</p>
+          <p id="profile-modal-mins" class="font-extrabold text-slate-900 text-sm mt-0.5">0 mins</p>
+        </div>
+        <div class="p-3 rounded-xl bg-slate-50 border border-slate-100">
+          <p class="text-[11px] text-slate-500">Tests Taken</p>
+          <p id="profile-modal-tests" class="font-extrabold text-brand-600 text-sm mt-0.5">0</p>
+        </div>
+        <div class="p-3 rounded-xl bg-slate-50 border border-slate-100">
+          <p class="text-[11px] text-slate-500">Streak</p>
+          <p id="profile-modal-streak" class="font-extrabold text-amber-600 text-sm mt-0.5">0 Days</p>
+        </div>
+      </div>
+
+      <div class="space-y-2">
+        <button onclick="closeProfileModal(); goToOnboarding();" class="w-full py-2.5 px-4 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xs transition">
+          🔄 Change Class / Branch / Section
+        </button>
+        <button onclick="closeProfileModal(); openTeacherPinModal();" class="w-full py-2.5 px-4 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs transition">
+          🔐 Switch to Teacher Portal (Requires PIN)
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================================================================== -->
+  <!-- MODAL 3: TEACHER PIN VERIFICATION MODAL                               -->
+  <!-- ===================================================================== -->
+  <div id="modal-teacher-pin" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-md w-full p-6 sm:p-8 shadow-2xl border border-slate-200">
+      <div class="w-12 h-12 rounded-2xl bg-amber-100 text-amber-700 flex items-center justify-center text-2xl mb-4">🔐</div>
+      <h3 class="text-xl font-extrabold text-slate-900">Teacher Portal Security PIN</h3>
+      <p class="text-xs sm:text-sm text-slate-500 mt-1">Only verified teachers with the PIN can upload study materials, host live classes, and analyze student study hours.</p>
+
+      <form onsubmit="verifyTeacherPin(event)" class="mt-5 space-y-4">
+        <div>
+          <label class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1.5">Enter 4-Digit Teacher PIN</label>
+          <input id="teacher-pin-input" type="password" maxlength="4" required placeholder="••••"
+            class="w-full px-4 py-3 rounded-xl border border-slate-300 focus:border-brand-600 focus:ring-2 focus:ring-brand-500/20 outline-none text-center font-mono text-2xl tracking-[0.5em]" />
+          <p class="text-[11px] text-slate-400 mt-2 text-center">Faculty PIN: <span class="font-mono font-bold text-slate-700">2026</span></p>
+        </div>
+
+        <div class="flex items-center gap-3 pt-2">
+          <button type="button" onclick="closeTeacherPinModal()" class="flex-1 py-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-sm transition">
+            Cancel
+          </button>
+          <button type="submit" class="flex-1 py-3 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-sm transition">
+            Unlock Portal
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ===================================================================== -->
+  <!-- MODAL 4: MATERIAL READER / TEST RUNNER / LIVE CLASS VIEWER            -->
+  <!-- ===================================================================== -->
+  <div id="modal-material-viewer" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-2xl w-full max-h-[88vh] flex flex-col shadow-2xl border border-slate-200 overflow-hidden">
+      <div class="px-6 py-4 bg-slate-900 text-white flex items-center justify-between">
+        <div>
+          <span id="viewer-badge" class="px-2.5 py-0.5 rounded-full bg-brand-500 text-white text-[10px] font-bold uppercase">Material</span>
+          <h3 id="viewer-title" class="text-base sm:text-lg font-extrabold mt-1">Title</h3>
+        </div>
+        <button onclick="closeMaterialViewer()" class="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white font-bold">✕</button>
+      </div>
+
+      <div id="viewer-body" class="p-6 overflow-y-auto space-y-4 text-sm text-slate-700 leading-relaxed flex-1"></div>
+
+      <div class="px-6 py-3.5 bg-slate-50 border-t border-slate-200 flex items-center justify-between">
+        <span id="viewer-meta" class="text-xs text-slate-500">Faculty Copy</span>
+        <button onclick="closeMaterialViewer()" class="px-5 py-2 rounded-xl bg-slate-900 text-white text-xs font-bold hover:bg-slate-800 transition">
+          Close
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================================================================== -->
+  <!-- JAVASCRIPT APPLICATION LOGIC (IN-MEMORY ZERO-START STATE)             -->
+  <!-- ===================================================================== -->
+  <script>
+    /**
+     * COMPLETE ACADEMIC DIRECTORY
+     * Covers Class 9th, 10th, 11th, 12th, and College (BTech, MBBS, BSc, BCom, BBA, BA, BPharma, BEd, BSc Nursing)
+     */
+    const ACADEMIC_DATA = {
+      "Class 9th": {
+        step2Label: "2. Select Foundation Track",
+        years: ["Regular Batch", "Olympiad Foundation"],
+        courses: {
+          "All Subjects (CBSE / State)": {
+            step3Label: "3. Select Section",
+            branches: {
+              "Section A (Science & Maths)": ["Mathematics", "Science", "Social Science", "English", "Information Technology"],
+              "Section B (Science & Maths)": ["Mathematics", "Science", "Social Science", "English", "Information Technology"]
+            }
+          }
+        }
+      },
+      "Class 10th": {
+        step2Label: "2. Select Board Track",
+        years: ["Board Batch", "NTSE Foundation"],
+        courses: {
+          "Board Core Subjects": {
+            step3Label: "3. Select Section",
+            branches: {
+              "Section A (Standard Maths)": ["Mathematics (Standard)", "Science", "Social Science", "English", "Computer Applications"],
+              "Section B (Basic Maths)": ["Mathematics (Basic)", "Science", "Social Science", "English", "Computer Applications"]
+            }
+          }
+        }
+      },
+      "Class 11th": {
+        step2Label: "2. Select Stream (Maths, Bio, Commerce, Arts, Agriculture)",
+        years: ["Class 11th"],
+        courses: {
+          "Maths (PCM)": {
+            step3Label: "3. Select Section / Group",
+            branches: {
+              "PCM + Computer Science": ["Physics", "Chemistry", "Mathematics", "Computer Science", "English"],
+              "PCM + Physical Education": ["Physics", "Chemistry", "Mathematics", "Physical Education", "English"]
+            }
+          },
+          "Bio (PCB)": {
+            step3Label: "3. Select Section / Group",
+            branches: {
+              "PCB + Biotechnology": ["Physics", "Chemistry", "Biology", "Biotechnology", "English"],
+              "PCMB (Maths + Bio)": ["Physics", "Chemistry", "Biology", "Mathematics", "English"]
+            }
+          },
+          "Commerce": {
+            step3Label: "3. Select Section / Group",
+            branches: {
+              "Commerce + Applied Maths": ["Accountancy", "Business Studies", "Economics", "Applied Mathematics", "English"],
+              "Commerce + Informatics": ["Accountancy", "Business Studies", "Economics", "Informatics Practices", "English"]
+            }
+          },
+          "Arts / Humanities": {
+            step3Label: "3. Select Section / Group",
+            branches: {
+              "Humanities Core": ["History", "Political Science", "Geography", "Economics", "Psychology"]
+            }
+          },
+          "Agriculture": {
+            step3Label: "3. Select Section / Group",
+            branches: {
+              "Agricultural Sciences": ["Agronomy", "Horticulture", "Soil Science", "Agricultural Chemistry", "Animal Husbandry"]
+            }
+          }
+        }
+      },
+      "Class 12th": {
+        step2Label: "2. Select Stream (Maths, Bio, Commerce, Arts, Agriculture)",
+        years: ["Class 12th"],
+        courses: {
+          "Maths (PCM)": {
+            step3Label: "3. Select Section / Track",
+            branches: {
+              "PCM + JEE / Board Section": ["Physics", "Chemistry", "Mathematics", "Computer Science", "English"]
+            }
+          },
+          "Bio (PCB)": {
+            step3Label: "3. Select Section / Track",
+            branches: {
+              "PCB + NEET / Board Section": ["Physics", "Chemistry", "Biology", "English", "Physical Education"]
+            }
+          },
+          "Commerce": {
+            step3Label: "3. Select Section / Track",
+            branches: {
+              "Commerce + CUET Section": ["Accountancy", "Business Studies", "Economics", "Applied Mathematics", "English"]
+            }
+          },
+          "Arts / Humanities": {
+            step3Label: "3. Select Section / Track",
+            branches: {
+              "Humanities + CUET Section": ["History", "Political Science", "Economics", "Sociology", "Psychology"]
+            }
+          },
+          "Agriculture": {
+            step3Label: "3. Select Section / Track",
+            branches: {
+              "Senior Secondary Agriculture": ["Crop Production", "Horticulture", "Agricultural Biology", "Soil & Water Conservation", "Agri Economics"]
+            }
+          }
+        }
+      },
+      "College": {
+        step2Label: "2. Select Degree Course",
+        years: ["1st Year", "2nd Year", "3rd Year", "4th Year"],
+        courses: {
+          "B.Tech": {
+            step3Label: "3. Select Engineering Branch / Department",
+            branches: {
+              "Computer Science & Engg (CSE)": ["Data Structures & Algorithms", "Operating Systems", "Database Management (DBMS)", "Computer Networks", "Artificial Intelligence"],
+              "Information Technology (IT)": ["Web Engineering", "Software Engineering", "Cloud Computing", "Cyber Security", "Data Mining"],
+              "Electronics & Comm. (ECE)": ["Analog & Digital Circuits", "Signals & Systems", "Microprocessors", "VLSI Design", "Control Systems"],
+              "Electrical Engineering (EE)": ["Power Systems", "Electrical Machines", "Power Electronics", "Network Theory", "Electromagnetics"],
+              "Mechanical Engineering (ME)": ["Thermodynamics", "Fluid Mechanics", "Strength of Materials", "Theory of Machines", "Manufacturing Processes"],
+              "Civil Engineering (CE)": ["Structural Analysis", "Geotechnical Engineering", "Surveying", "Transportation Engineering", "Environmental Engg"],
+              "AI & Data Science": ["Machine Learning", "Deep Learning", "Statistical Modeling", "Natural Language Processing", "Big Data Analytics"]
+            }
+          },
+          "MBBS": {
+            step3Label: "3. Select Medical Department / Phase",
+            branches: {
+              "Pre-Clinical Phase": ["Human Anatomy", "Medical Physiology", "Biochemistry"],
+              "Para-Clinical Phase": ["Pathology", "Pharmacology", "Microbiology", "Forensic Medicine"],
+              "Clinical Phase": ["General Medicine", "General Surgery", "Pediatrics", "Obstetrics & Gynecology"]
+            }
+          },
+          "B.Sc": {
+            step3Label: "3. Select Science Department",
+            branches: {
+              "Physics Honours": ["Quantum Mechanics", "Classical Mechanics", "Electrodynamics", "Solid State Physics"],
+              "Chemistry Honours": ["Organic Chemistry", "Inorganic Chemistry", "Physical Chemistry", "Analytical Techniques"],
+              "Mathematics Honours": ["Real Analysis", "Linear Algebra", "Differential Equations", "Abstract Algebra"],
+              "Biotechnology & Zoology": ["Cell & Molecular Biology", "Genetics", "Immunology", "Ecology & Evolution"],
+              "Computer Science": ["C++ & Java Programming", "Discrete Mathematics", "Database Systems", "Web Development"]
+            }
+          },
+          "B.Com": {
+            step3Label: "3. Select Commerce Department",
+            branches: {
+              "Accounting & Finance": ["Financial Accounting", "Corporate Accounting", "Cost & Management Accounting", "Auditing"],
+              "Banking & Insurance": ["Banking Law & Practice", "Financial Markets", "Insurance Risk Management"],
+              "Taxation & Corporate Law": ["Income Tax Law", "GST & Indirect Taxes", "Business Regulatory Framework"]
+            }
+          },
+          "BBA": {
+            step3Label: "3. Select Management Department",
+            branches: {
+              "Finance Management": ["Corporate Finance", "Investment & Portfolio Mgmt", "Financial Statement Analysis"],
+              "Marketing Management": ["Marketing Principles", "Consumer Behavior", "Digital & Brand Marketing"],
+              "Human Resource (HR)": ["Organizational Behavior", "Talent Management", "Industrial Relations"]
+            }
+          },
+          "BA": {
+            step3Label: "3. Select Arts Department",
+            branches: {
+              "History & Archaeology": ["Ancient Indian History", "Medieval World", "Modern Indian History"],
+              "Political Science": ["Political Theory", "Indian Constitution", "International Relations"],
+              "Economics": ["Microeconomics", "Macroeconomics", "Indian Economic Development", "Econometrics"],
+              "Psychology": ["Cognitive Psychology", "Developmental Psychology", "Clinical & Social Psychology"]
+            }
+          },
+          "B.Pharma": {
+            step3Label: "3. Select Pharmacy Department",
+            branches: {
+              "Pharmaceutics": ["Physical Pharmaceutics", "Pharmaceutical Engineering", "Biopharmaceutics"],
+              "Pharmacology": ["Human Anatomy & Physiology", "Pathophysiology", "Clinical Pharmacology"],
+              "Pharmaceutical Chemistry": ["Medicinal Chemistry", "Pharmaceutical Analysis", "Organic Chemistry"]
+            }
+          },
+          "B.Ed": {
+            step3Label: "3. Select Pedagogy Department",
+            branches: {
+              "Pedagogy of Science & Maths": ["Teaching of Physical Science", "Teaching of Mathematics", "Childhood & Growing Up"],
+              "Pedagogy of Social Science & Lang": ["Teaching of Social Studies", "Teaching of English", "Assessment for Learning"]
+            }
+          },
+          "B.Sc Nursing": {
+            step3Label: "3. Select Nursing Department",
+            branches: {
+              "Medical-Surgical Nursing": ["Adult Health Nursing", "Anatomy & Physiology", "Applied Nutrition & Pharmacology"],
+              "Community & Child Health": ["Pediatric Nursing", "Community Health Nursing", "Midwifery & Obstetrical Nursing"]
+            }
+          }
+        }
+      }
+    };
+
+    const MATERIAL_TYPES = ["All", "Books", "Notes", "Formula", "Short Notes", "Mindmaps", "PYQs", "Model Paper", "Tests"];
+    const TEACHER_PIN = "2026";
+
+    /**
+     * ZERO-INITIALIZED APPLICATION STATE
+     * - 0 study minutes initially
+     * - 0 tests attended initially
+     * - 0 streak days initially
+     * - 0 pre-uploaded materials (empty until a teacher uploads!)
+     * - 0 pre-scheduled live classes (empty until a teacher hosts!)
+     */
+    let state = {
+      hasJoinedSection: false,
+      studentName: "",
+      selectedLevel: "",
+      selectedCourse: "",
+      selectedBranch: "",
+      selectedYear: "",
+      activeSubject: "",
+      activeStudentTab: "materials",
+      activeMaterialFilter: "All",
+      activeDiscussionRoom: "students_only", // 'students_only' | 'teacher_student' | 'all_department'
+      isTeacherAuthenticated: false,
+
+      // Stopwatch & Tracker (All Zero on App Open)
+      timerRunning: false,
+      timerSeconds: 0,
+      timerInterval: null,
+      todayStudyMinutes: 0,
+      streakDays: 0,
+      testsCompleted: 0,
+      totalTestScorePercent: 0,
+      subjectMinutes: {},
+
+      // Daily Planner Tasks (Starts empty)
+      plannerTasks: [],
+
+      // Teacher-Uploaded Materials (Starts completely empty!)
+      uploadedMaterials: [],
+
+      // Teacher-Scheduled Live Classes (Starts completely empty!)
+      liveClasses: [],
+
+      // Discussion Rooms Messages (Starts clean)
+      messages: {
+        students_only: [],
+        teacher_student: [],
+        all_department: []
+      },
+
+      // Live Roster synced when students join
+      checkedInStudents: []
+    };
+
+    // Toast notification helper (Never uses alert)
+    function showToast(message, type = "info") {
+      const container = document.getElementById("toast-container");
+      const toast = document.createElement("div");
+      const colors = {
+        success: "bg-emerald-900 text-white border-emerald-700",
+        error: "bg-rose-900 text-white border-rose-700",
+        info: "bg-slate-900 text-white border-slate-700"
+      };
+      toast.className = `pointer-events-auto px-4 py-3 rounded-2xl border shadow-lg text-xs sm:text-sm font-semibold flex items-center justify-between gap-3 transition-all ${colors[type] || colors.info}`;
+      toast.innerHTML = `<span>${message}</span><button onclick="this.parentElement.remove()" class="text-white/70 hover:text-white font-bold">✕</button>`;
+      container.appendChild(toast);
+      setTimeout(() => {
+        if (toast.parentElement) toast.remove();
+      }, 4000);
+    }
+
+    // Generate Scannable QR Code on Load
+    function initQRCode() {
+      const qrContainer = document.getElementById("qrcode-container");
+      qrContainer.innerHTML = "";
+      try {
+        if (typeof QRCode !== "undefined") {
+          new QRCode(qrContainer, {
+            text: window.location.href || "https://edupulse-qr.campus.edu/join",
+            width: 152,
+            height: 152,
+            colorDark: "#0f172a",
+            colorLight: "#ffffff",
+            correctLevel: QRCode.CorrectLevel.M
+          });
+        } else {
+          throw new Error("QRCode unavailable");
+        }
+      } catch (e) {
+        qrContainer.innerHTML = `<svg viewBox="0 0 100 100" class="w-36 h-36 text-slate-900" fill="currentColor"><rect x="10" y="10" width="25" height="25" rx="3"/><rect x="65" y="10" width="25" height="25" rx="3"/><rect x="10" y="65" width="25" height="25" rx="3"/><rect x="45" y="45" width="15" height="15"/><rect x="70" y="65" width="20" height="20"/></svg>`;
+      }
+    }
+
+    function simulateQrScan() {
+      showToast("📷 QR Code Scanned! Answer which Class/Course, Branch & Year you are from.", "success");
+      document.getElementById("student-name-input").focus();
+    }
+
+    // =====================================================================
+    // STEP-BY-STEP QR ONBOARDING WIZARD
+    // =====================================================================
+    function renderOnboardingWizard() {
+      const levelContainer = document.getElementById("level-options");
+      levelContainer.innerHTML = Object.keys(ACADEMIC_DATA).map(lvl => {
+        const active = state.selectedLevel === lvl;
+        return `
+          <button type="button" onclick="selectLevel('${lvl}')"
+            class="py-3 px-3 rounded-xl border text-xs sm:text-sm font-bold transition text-center ${active ? 'border-brand-600 bg-brand-600 text-white shadow-xs' : 'border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-700'}">
+            ${lvl}
+          </button>
+        `;
+      }).join("");
+
+      const step2Box = document.getElementById("step-2-container");
+      const step3Box = document.getElementById("step-3-container");
+      const step4Box = document.getElementById("step-4-container");
+      const previewBox = document.getElementById("subject-preview-box");
+      const joinBtn = document.getElementById("join-cohort-btn");
+
+      if (!state.selectedLevel) {
+        step2Box.classList.add("hidden");
+        step3Box.classList.add("hidden");
+        step4Box.classList.add("hidden");
+        previewBox.classList.add("hidden");
+        joinBtn.disabled = true;
+        return;
+      }
+
+      const levelObj = ACADEMIC_DATA[state.selectedLevel];
+      document.getElementById("step-2-label").textContent = levelObj.step2Label;
+      step2Box.classList.remove("hidden");
+      document.getElementById("wizard-step-badge").textContent = "Step 2 of 4";
+
+      const courseContainer = document.getElementById("course-options");
+      courseContainer.innerHTML = Object.keys(levelObj.courses).map(course => {
+        const active = state.selectedCourse === course;
+        return `
+          <button type="button" onclick="selectCourse('${course}')"
+            class="py-2.5 px-3 rounded-xl border text-xs font-bold transition text-left ${active ? 'border-brand-600 bg-brand-50 text-brand-700 ring-1 ring-brand-600' : 'border-slate-200 hover:border-slate-300 text-slate-700'}">
+            ${course}
+          </button>
+        `;
+      }).join("");
+
+      if (!state.selectedCourse || !levelObj.courses[state.selectedCourse]) {
+        step3Box.classList.add("hidden");
+        step4Box.classList.add("hidden");
+        previewBox.classList.add("hidden");
+        joinBtn.disabled = true;
+        return;
+      }
+
+      const courseObj = levelObj.courses[state.selectedCourse];
+      document.getElementById("step-3-label").textContent = courseObj.step3Label;
+      step3Box.classList.remove("hidden");
+      document.getElementById("wizard-step-badge").textContent = "Step 3 of 4";
+
+      const branchContainer = document.getElementById("branch-options");
+      branchContainer.innerHTML = Object.keys(courseObj.branches).map(branch => {
+        const active = state.selectedBranch === branch;
+        return `
+          <button type="button" onclick="selectBranch('${branch}')"
+            class="py-2.5 px-3.5 rounded-xl border text-xs font-bold transition text-left ${active ? 'border-brand-600 bg-brand-50 text-brand-700 ring-1 ring-brand-600' : 'border-slate-200 hover:border-slate-300 text-slate-700'}">
+            ${branch}
+          </button>
+        `;
+      }).join("");
+
+      if (!state.selectedBranch || !courseObj.branches[state.selectedBranch]) {
+        step4Box.classList.add("hidden");
+        previewBox.classList.add("hidden");
+        joinBtn.disabled = true;
+        return;
+      }
+
+      step4Box.classList.remove("hidden");
+      document.getElementById("wizard-step-badge").textContent = "Step 4 of 4";
+      const yearContainer = document.getElementById("year-options");
+      yearContainer.innerHTML = levelObj.years.map(yr => {
+        const active = state.selectedYear === yr;
+        return `
+          <button type="button" onclick="selectYear('${yr}')"
+            class="py-2.5 px-3 rounded-xl border text-xs font-bold transition text-center ${active ? 'border-emerald-600 bg-emerald-600 text-white shadow-xs' : 'border-slate-200 hover:border-slate-300 text-slate-700'}">
+            ${yr}
+          </button>
+        `;
+      }).join("");
+
+      const subjects = courseObj.branches[state.selectedBranch];
+      previewBox.classList.remove("hidden");
+      document.getElementById("subject-preview-pills").innerHTML = subjects.map(sub =>
+        `<span class="px-2.5 py-1 rounded-lg bg-white border border-slate-200 text-xs font-semibold text-slate-700">${sub}</span>`
+      ).join("");
+
+      joinBtn.disabled = !state.selectedYear;
+    }
+
+    function selectLevel(lvl) {
+      state.selectedLevel = lvl;
+      const firstCourse = Object.keys(ACADEMIC_DATA[lvl].courses)[0];
+      state.selectedCourse = firstCourse;
+      const firstBranch = Object.keys(ACADEMIC_DATA[lvl].courses[firstCourse].branches)[0];
+      state.selectedBranch = firstBranch;
+      state.selectedYear = ACADEMIC_DATA[lvl].years[0];
+      renderOnboardingWizard();
+    }
+
+    function selectCourse(course) {
+      state.selectedCourse = course;
+      const firstBranch = Object.keys(ACADEMIC_DATA[state.selectedLevel].courses[course].branches)[0];
+      state.selectedBranch = firstBranch;
+      renderOnboardingWizard();
+    }
+
+    function selectBranch(branch) {
+      state.selectedBranch = branch;
+      renderOnboardingWizard();
+    }
+
+    function selectYear(yr) {
+      state.selectedYear = yr;
+      renderOnboardingWizard();
+    }
+
+    function completeOnboarding() {
+      const nameInput = document.getElementById("student-name-input").value.trim();
+      state.studentName = nameInput || "Student";
+      state.hasJoinedSection = true;
+
+      const subjects = ACADEMIC_DATA[state.selectedLevel].courses[state.selectedCourse].branches[state.selectedBranch];
+      state.activeSubject = subjects[0];
+
+      // Initialize all subjects to 0 minutes (Zero-start guarantee)
+      subjects.forEach(sub => {
+        if (state.subjectMinutes[sub] === undefined) {
+          state.subjectMinutes[sub] = 0;
+        }
+      });
+
+      // Register student in checkedInStudents list (starting at 0 mins)
+      const cohortLabel = `${state.selectedLevel} • ${state.selectedCourse} • ${state.selectedBranch} • ${state.selectedYear}`;
+      const existingIdx = state.checkedInStudents.findIndex(s => s.name === state.studentName);
+      if (existingIdx === -1) {
+        state.checkedInStudents.push({
+          name: state.studentName,
+          cohort: cohortLabel,
+          minutes: state.todayStudyMinutes,
+          tests: state.testsCompleted,
+          avgScore: "0%",
+          status: "Joined (0m)"
+        });
+      } else {
+        state.checkedInStudents[existingIdx].cohort = cohortLabel;
+      }
+
+      // Show Top-Right Student Tools (Stopwatch, Daily Planner, Profile)
+      const topTools = document.getElementById("student-topbar-tools");
+      topTools.classList.remove("hidden");
+      topTools.classList.add("flex");
+
+      document.getElementById("header-cohort-sub").textContent = cohortLabel;
+      document.getElementById("topbar-student-name").textContent = state.studentName;
+      document.getElementById("topbar-avatar-initials").textContent = state.studentName.charAt(0).toUpperCase();
+
+      // Switch to Student Workspace
+      document.getElementById("view-onboarding").classList.add("hidden");
+      document.getElementById("view-teacher-portal").classList.add("hidden");
+      document.getElementById("view-student-dashboard").classList.remove("hidden");
+
+      renderStudentDashboard();
+      showToast(`✅ Welcome ${state.studentName}! Your section workspace is ready (0h 0m logged).`, "success");
+    }
+
+    function goToOnboarding() {
+      document.getElementById("view-student-dashboard").classList.add("hidden");
+      document.getElementById("view-teacher-portal").classList.add("hidden");
+      document.getElementById("view-onboarding").classList.remove("hidden");
+      renderOnboardingWizard();
+    }
+
+    // =====================================================================
+    // STUDENT WORKSPACE RENDERING
+    // =====================================================================
+    function getActiveCohortSubjects() {
+      return ACADEMIC_DATA[state.selectedLevel].courses[state.selectedCourse].branches[state.selectedBranch];
+    }
+
+    function renderStudentDashboard() {
+      document.getElementById("dashboard-cohort-heading").textContent =
+        `${state.selectedLevel} • ${state.selectedCourse} • ${state.selectedBranch} (${state.selectedYear})`;
+
+      document.getElementById("dept-room-label").textContent = `${state.selectedCourse} - ${state.selectedBranch}`;
+
+      const subjects = getActiveCohortSubjects();
+      const tabsContainer = document.getElementById("subject-room-tabs");
+      tabsContainer.innerHTML = subjects.map(sub => {
+        const active = state.activeSubject === sub;
+        return `
+          <button onclick="selectActiveSubject('${sub}')"
+            class="px-3.5 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition ${active ? 'bg-brand-600 text-white shadow-xs' : 'bg-slate-100 hover:bg-slate-200 text-slate-700'}">
+            ${sub}
+          </button>
+        `;
+      }).join("");
+
+      document.querySelectorAll(".active-subj-name").forEach(el => el.textContent = state.activeSubject);
+
+      renderMaterialFilters();
+      renderStudyMaterials();
+      renderLiveClasses();
+      renderTrackerStats();
+      renderDiscussionFeed();
+    }
+
+    function selectActiveSubject(sub) {
+      state.activeSubject = sub;
+      renderStudentDashboard();
+    }
+
+    // Switch among the 4 horizontal options in below
+    function switchStudentTab(tabName) {
+      state.activeStudentTab = tabName;
+      ["materials", "live", "tracker", "rooms"].forEach(t => {
+        const sec = document.getElementById(`student-section-${t}`);
+        const btn = document.getElementById(`bottom-nav-${t}`);
+        if (t === tabName) {
+          sec.classList.remove("hidden");
+          btn.classList.add("bg-brand-50", "text-brand-700");
+          btn.classList.remove("text-slate-600", "hover:bg-slate-100");
+        } else {
+          sec.classList.add("hidden");
+          btn.classList.remove("bg-brand-50", "text-brand-700");
+          btn.classList.add("text-slate-600", "hover:bg-slate-100");
+        }
+      });
+    }
+
+    // =====================================================================
+    // 1. STUDY MATERIALS (ZERO PRE-LOADED ITEMS — ONLY TEACHER UPLOADS)
+    // =====================================================================
+    function getMaterialsForCurrentSection() {
+      return state.uploadedMaterials.filter(m =>
+        m.level === state.selectedLevel &&
+        m.course === state.selectedCourse &&
+        m.branch === state.selectedBranch &&
+        m.subject === state.activeSubject &&
+        (m.year === "All Years" || m.year === state.selectedYear)
+      );
+    }
+
+    function renderMaterialFilters() {
+      const container = document.getElementById("material-type-filters");
+      container.innerHTML = MATERIAL_TYPES.map(type => {
+        const active = state.activeMaterialFilter === type;
+        return `
+          <button onclick="setMaterialFilter('${type}')"
+            class="px-3.5 py-1.5 rounded-full text-xs font-bold whitespace-nowrap border transition ${active ? 'bg-slate-900 text-white border-slate-900' : 'bg-white text-slate-600 border-slate-200 hover:border-slate-300'}">
+            ${type}
+          </button>
+        `;
+      }).join("");
+    }
+
+    function setMaterialFilter(type) {
+      state.activeMaterialFilter = type;
+      renderMaterialFilters();
+      renderStudyMaterials();
+    }
+
+    function renderStudyMaterials() {
+      const container = document.getElementById("materials-container");
+      const allForSub = getMaterialsForCurrentSection();
+      const filtered = state.activeMaterialFilter === "All"
+        ? allForSub
+        : allForSub.filter(m => m.type === state.activeMaterialFilter);
+
+      if (filtered.length === 0) {
+        container.innerHTML = `
+          <div class="bg-white rounded-3xl border border-dashed border-slate-300 p-8 sm:p-12 text-center max-w-2xl mx-auto">
+            <div class="w-14 h-14 rounded-2xl bg-slate-100 text-slate-500 flex items-center justify-center text-2xl mx-auto mb-3">📂</div>
+            <h3 class="font-extrabold text-slate-900 text-base sm:text-lg">No Study Materials Uploaded Yet</h3>
+            <p class="text-xs sm:text-sm text-slate-500 mt-1.5 leading-relaxed">
+              Your teacher has not uploaded any <strong>${state.activeMaterialFilter === 'All' ? 'Books, Notes, Formulas, Mindmaps, PYQs, or Tests' : state.activeMaterialFilter}</strong> for <strong>${state.activeSubject}</strong> yet.
+            </p>
+            <div class="mt-5 pt-4 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-center gap-2.5">
+              <span class="text-xs text-slate-400">Are you the teacher for this subject?</span>
+              <button onclick="openTeacherPinModal()" class="px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold transition">
+                🔐 Login with Teacher PIN to Upload
+              </button>
+            </div>
+          </div>
+        `;
+        return;
+      }
+
+      const typeIcons = {
+        "Books": "📘", "Notes": "📝", "Formula": "📐", "Short Notes": "⚡",
+        "Mindmaps": "🧠", "PYQs": "📜", "Model Paper": "📄", "Tests": "✅"
+      };
+
+      container.innerHTML = `
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+          ${filtered.map(item => `
+            <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs hover:shadow-md transition flex flex-col justify-between">
+              <div>
+                <div class="flex items-center justify-between gap-2 mb-3">
+                  <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-brand-50 text-brand-700 text-xs font-bold">
+                    <span>${typeIcons[item.type] || "📄"}</span>
+                    <span>${item.type}</span>
+                  </span>
+                  <span class="text-[11px] text-slate-400 font-medium">${item.uploadedAt}</span>
+                </div>
+                <h3 class="font-bold text-slate-900 text-sm sm:text-base leading-snug">${item.title}</h3>
+                <p class="text-xs text-slate-500 mt-2">Uploaded by <strong class="text-slate-700">${item.faculty}</strong></p>
+              </div>
+
+              <div class="mt-5 pt-3.5 border-t border-slate-100 flex items-center justify-between">
+                <span class="text-[11px] font-semibold text-emerald-600">✓ Faculty Verified</span>
+                <button onclick="openMaterialViewer('${item.id}')"
+                  class="px-4 py-2 rounded-xl text-xs font-bold transition ${item.type === 'Tests' ? 'bg-emerald-600 hover:bg-emerald-700 text-white' : 'bg-slate-900 hover:bg-slate-800 text-white'}">
+                  ${item.type === 'Tests' ? 'Attempt Test →' : 'Open & Study'}
+                </button>
+              </div>
+            </div>
+          `).join("")}
+        </div>
+      `;
+    }
+
+    function openMaterialViewer(materialId) {
+      const item = state.uploadedMaterials.find(m => m.id === materialId);
+      if (!item) return;
+
+      document.getElementById("viewer-badge").textContent = item.type;
+      document.getElementById("viewer-title").textContent = item.title;
+      document.getElementById("viewer-meta").textContent = `Uploaded by ${item.faculty} • ${item.subject}`;
+
+      const body = document.getElementById("viewer-body");
+
+      if (item.type === "Tests") {
+        const qText = item.testQuestion?.question || `Core concept evaluation for ${item.subject}`;
+        const correctOpt = item.testQuestion?.correct || "Verified analytical principle";
+        const wrongOpt = item.testQuestion?.wrong || "Unverified assumption";
+
+        body.innerHTML = `
+          <div class="p-3.5 rounded-2xl bg-brand-50 border border-brand-100 text-xs text-brand-900 font-medium">
+            Answer the assessment question below to record your test completion in Your Study Tracker.
+          </div>
+          <form onsubmit="submitUploadedTest(event)" class="space-y-4">
+            <div class="p-4 rounded-2xl border border-slate-200 space-y-2">
+              <p class="font-bold text-slate-900 text-sm">Q1. ${qText}</p>
+              <label class="flex items-center gap-2 text-xs py-1.5 cursor-pointer">
+                <input type="radio" name="ans" value="1" required> <span>${correctOpt}</span>
+              </label>
+              <label class="flex items-center gap-2 text-xs py-1.5 cursor-pointer">
+                <input type="radio" name="ans" value="0" required> <span>${wrongOpt}</span>
+              </label>
+            </div>
+            <button type="submit" class="w-full py-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm transition">
+              Submit Test & Sync Score
+            </button>
+          </form>
+        `;
+      } else {
+        body.innerHTML = `
+          <div class="p-5 rounded-2xl bg-slate-50 border border-slate-200 whitespace-pre-line text-sm text-slate-800 leading-relaxed">
+            ${item.content || "Study material provided by your faculty."}
+          </div>
+        `;
+      }
+
+      document.getElementById("modal-material-viewer").classList.remove("hidden");
+    }
+
+    function submitUploadedTest(e) {
+      e.preventDefault();
+      const form = new FormData(e.target);
+      const isCorrect = Number(form.get("ans") || 0) === 1;
+      const score = isCorrect ? 100 : 0;
+
+      state.testsCompleted += 1;
+      state.totalTestScorePercent += score;
+      syncStudentAnalyticsToTeacher();
+      renderTrackerStats();
+      closeMaterialViewer();
+      showToast(`✅ Test submitted! Score: ${score}% recorded in your tracker.`, "success");
+    }
+
+    function closeMaterialViewer() {
+      document.getElementById("modal-material-viewer").classList.add("hidden");
+    }
+
+    // =====================================================================
+    // 2. LIVE CLASSES (STARTS EMPTY UNTIL TEACHER SCHEDULES / GOES LIVE)
+    // =====================================================================
+    function renderLiveClasses() {
+      const container = document.getElementById("live-classes-container");
+      const matching = state.liveClasses.filter(c =>
+        c.level === state.selectedLevel &&
+        c.course === state.selectedCourse &&
+        c.branch === state.selectedBranch &&
+        c.subject === state.activeSubject
+      );
+
+      document.getElementById("live-class-count-badge").textContent = `${matching.length} Live / Scheduled`;
+
+      if (matching.length === 0) {
+        container.innerHTML = `
+          <div class="bg-white rounded-3xl border border-dashed border-slate-300 p-8 sm:p-12 text-center max-w-2xl mx-auto">
+            <div class="w-14 h-14 rounded-2xl bg-rose-50 text-rose-600 flex items-center justify-center text-2xl mx-auto mb-3">🎥</div>
+            <h3 class="font-extrabold text-slate-900 text-base sm:text-lg">No Live Classes Scheduled Right Now</h3>
+            <p class="text-xs sm:text-sm text-slate-500 mt-1.5">
+              When your teacher starts a live class for <strong>${state.activeSubject}</strong>, a join card will appear here immediately.
+            </p>
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = `
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          ${matching.map(cls => `
+            <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs flex flex-col justify-between">
+              <div>
+                <div class="flex items-center justify-between mb-2">
+                  <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-rose-100 text-rose-700 text-[11px] font-extrabold">
+                    <span class="w-2 h-2 rounded-full bg-rose-600 animate-ping"></span> LIVE NOW
+                  </span>
+                  <span class="text-xs text-slate-400">${cls.startedAt}</span>
+                </div>
+                <h4 class="font-extrabold text-slate-900 text-base">${cls.topic}</h4>
+                <p class="text-xs text-slate-500 mt-1">Host: <strong class="text-slate-700">${cls.teacher}</strong> • ${cls.subject}</p>
+              </div>
+              <button onclick="joinLiveClassSession('${cls.id}')" class="mt-4 w-full py-2.5 px-4 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs transition">
+                Join Live Class & Start Study Clock →
+              </button>
+            </div>
+          `).join("")}
+        </div>
+      `;
+    }
+
+    function joinLiveClassSession(classId) {
+      const cls = state.liveClasses.find(c => c.id === classId);
+      if (!cls) return;
+      if (!state.timerRunning) {
+        toggleStudyTimer();
+      }
+      showToast(`🎥 Joined "${cls.topic}" with ${cls.teacher}! Stopwatch started automatically.`, "success");
+    }
+
+    // =====================================================================
+    // 3. STUDY STOPWATCH CLOCK & YOUR STUDY TRACKER (ALL ZERO START)
+    // =====================================================================
+    function formatSeconds(sec) {
+      const hrs = String(Math.floor(sec / 3600)).padStart(2, "0");
+      const mins = String(Math.floor((sec % 3600) / 60)).padStart(2, "0");
+      const secs = String(sec % 60).padStart(2, "0");
+      return `${hrs}:${mins}:${secs}`;
+    }
+
+    function updateStopwatchDisplays() {
+      const formatted = formatSeconds(state.timerSeconds);
+      document.getElementById("topbar-stopwatch-display").textContent = formatted;
+      document.getElementById("tracker-stopwatch-display").textContent = formatted;
+    }
+
+    function toggleStudyTimer() {
+      const topBtn = document.getElementById("topbar-stopwatch-toggle");
+      const trackerBtn = document.getElementById("tracker-toggle-btn");
+      const statusEl = document.getElementById("tracker-stopwatch-status");
+
+      if (state.timerRunning) {
+        clearInterval(state.timerInterval);
+        state.timerRunning = false;
+        topBtn.textContent = "▶";
+        trackerBtn.textContent = "▶ Resume Clock";
+        statusEl.textContent = "Stopwatch paused";
+      } else {
+        state.timerRunning = true;
+        topBtn.textContent = "⏸";
+        trackerBtn.textContent = "⏸ Pause Clock";
+        statusEl.textContent = `Recording study time for ${state.activeSubject}...`;
+        state.timerInterval = setInterval(() => {
+          state.timerSeconds += 1;
+          updateStopwatchDisplays();
+        }, 1000);
+      }
+    }
+
+    function logStudySession() {
+      if (state.timerSeconds === 0) {
+        showToast("Start the stopwatch clock first to record study time.", "info");
+        return;
+      }
+      const minsLogged = Math.max(1, Math.round(state.timerSeconds / 60));
+      clearInterval(state.timerInterval);
+      state.timerRunning = false;
+      state.timerSeconds = 0;
+
+      updateStopwatchDisplays();
+      document.getElementById("topbar-stopwatch-toggle").textContent = "▶";
+      document.getElementById("tracker-toggle-btn").textContent = "▶ Start Clock";
+      document.getElementById("tracker-stopwatch-status").textContent = "Saved to today's tracker!";
+
+      addStudyMinutes(minsLogged);
+    }
+
+    function handleManualStudyLog(e) {
+      e.preventDefault();
+      const input = document.getElementById("manual-mins-input");
+      const mins = parseInt(input.value, 10);
+      if (!mins || mins <= 0) return;
+      input.value = "";
+      addStudyMinutes(mins);
+    }
+
+    function addStudyMinutes(mins) {
+      state.todayStudyMinutes += mins;
+      state.subjectMinutes[state.activeSubject] = (state.subjectMinutes[state.activeSubject] || 0) + mins;
+      if (state.todayStudyMinutes > 0 && state.streakDays === 0) {
+        state.streakDays = 1;
+      }
+      syncStudentAnalyticsToTeacher();
+      renderTrackerStats();
+      showToast(`⏱️ Logged +${mins} mins for ${state.activeSubject}!`, "success");
+    }
+
+    function syncStudentAnalyticsToTeacher() {
+      const idx = state.checkedInStudents.findIndex(s => s.name === state.studentName);
+      if (idx !== -1) {
+        const avg = state.testsCompleted > 0 ? Math.round(state.totalTestScorePercent / state.testsCompleted) + "%" : "0%";
+        state.checkedInStudents[idx].minutes = state.todayStudyMinutes;
+        state.checkedInStudents[idx].tests = state.testsCompleted;
+        state.checkedInStudents[idx].avgScore = avg;
+        state.checkedInStudents[idx].status = state.todayStudyMinutes > 0 ? "Active Studying" : "Joined (0m)";
+      }
+    }
+
+    function renderTrackerStats() {
+      document.getElementById("mini-today-mins").textContent = `${state.todayStudyMinutes} mins`;
+      document.getElementById("stat-today-minutes").textContent = `${state.todayStudyMinutes} mins`;
+      document.getElementById("stat-tests-done").textContent = state.testsCompleted;
+
+      const avgPercent = state.testsCompleted > 0 ? Math.round(state.totalTestScorePercent / state.testsCompleted) : 0;
+      document.getElementById("stat-avg-score").textContent = `Avg Score: ${avgPercent}%`;
+      document.getElementById("stat-streak-days").textContent = `${state.streakDays} Days`;
+
+      const doneTasks = state.plannerTasks.filter(t => t.done).length;
+      document.getElementById("stat-planner-done").textContent = `${doneTasks} / ${state.plannerTasks.length}`;
+
+      const goalPercent = Math.min(100, Math.round((state.todayStudyMinutes / 240) * 100));
+      document.getElementById("daily-goal-percent").textContent = `${goalPercent}%`;
+      document.getElementById("daily-goal-bar").style.width = `${goalPercent}%`;
+
+      const breakdownContainer = document.getElementById("subject-study-breakdown");
+      const subjects = getActiveCohortSubjects();
+      breakdownContainer.innerHTML = subjects.map(sub => {
+        const m = state.subjectMinutes[sub] || 0;
+        const pct = Math.min(100, Math.round((m / 90) * 100));
+        return `
+          <div>
+            <div class="flex justify-between text-xs font-semibold mb-1">
+              <span class="text-slate-700">${sub}</span>
+              <span class="text-slate-500 font-mono">${m} mins</span>
+            </div>
+            <div class="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
+              <div class="h-full bg-brand-600 rounded-full transition-all duration-300" style="width: ${pct}%"></div>
+            </div>
+          </div>
+        `;
+      }).join("");
+    }
+
+    // =====================================================================
+    // DAILY PLANNER & PROFILE MODALS (TOP-RIGHT CORNER)
+    // =====================================================================
+    function openDailyPlannerModal() {
+      renderPlannerTasks();
+      document.getElementById("modal-daily-planner").classList.remove("hidden");
+    }
+
+    function closeDailyPlannerModal() {
+      document.getElementById("modal-daily-planner").classList.add("hidden");
+    }
+
+    function addPlannerTask(e) {
+      e.preventDefault();
+      const input = document.getElementById("planner-task-input");
+      const text = input.value.trim();
+      if (!text) return;
+
+      state.plannerTasks.push({
+        id: Date.now(),
+        text,
+        subject: state.activeSubject,
+        done: false
+      });
+      input.value = "";
+      renderPlannerTasks();
+      renderTrackerStats();
+    }
+
+    function togglePlannerTask(id) {
+      const task = state.plannerTasks.find(t => t.id === id);
+      if (task) task.done = !task.done;
+      renderPlannerTasks();
+      renderTrackerStats();
+    }
+
+    function deletePlannerTask(id) {
+      state.plannerTasks = state.plannerTasks.filter(t => t.id !== id);
+      renderPlannerTasks();
+      renderTrackerStats();
+    }
+
+    function renderPlannerTasks() {
+      const list = document.getElementById("planner-tasks-list");
+      const total = state.plannerTasks.length;
+      const done = state.plannerTasks.filter(t => t.done).length;
+
+      document.getElementById("planner-badge-count").textContent = total;
+      document.getElementById("planner-summary-text").textContent = `${done} of ${total} tasks completed`;
+
+      if (total === 0) {
+        list.innerHTML = `
+          <div class="text-center py-8 text-xs text-slate-400">
+            Your Daily Planner is empty. Add a study goal above to organize today's session!
+          </div>
+        `;
+        return;
+      }
+
+      list.innerHTML = state.plannerTasks.map(t => `
+        <div class="flex items-center justify-between gap-2 p-3 rounded-xl border ${t.done ? 'bg-emerald-50/60 border-emerald-200' : 'bg-slate-50 border-slate-200'}">
+          <label class="flex items-center gap-2.5 cursor-pointer flex-1 min-w-0">
+            <input type="checkbox" ${t.done ? 'checked' : ''} onchange="togglePlannerTask(${t.id})" class="w-4 h-4 rounded text-brand-600" />
+            <div class="truncate">
+              <p class="text-xs sm:text-sm font-semibold ${t.done ? 'line-through text-slate-400' : 'text-slate-800'} truncate">${t.text}</p>
+              <span class="text-[10px] text-slate-400">${t.subject}</span>
+            </div>
+          </label>
+          <button onclick="deletePlannerTask(${t.id})" class="text-slate-400 hover:text-rose-600 text-xs font-bold px-1.5">✕</button>
+        </div>
+      `).join("");
+    }
+
+    function openProfileModal() {
+      document.getElementById("profile-modal-avatar").textContent = (state.studentName || "S").charAt(0).toUpperCase();
+      document.getElementById("profile-modal-name").textContent = state.studentName;
+      document.getElementById("profile-modal-cohort").textContent =
+        `${state.selectedLevel} • ${state.selectedCourse} • ${state.selectedBranch} (${state.selectedYear})`;
+      document.getElementById("profile-modal-mins").textContent = `${state.todayStudyMinutes} mins`;
+      document.getElementById("profile-modal-tests").textContent = state.testsCompleted;
+      document.getElementById("profile-modal-streak").textContent = `${state.streakDays} Days`;
+      document.getElementById("modal-student-profile").classList.remove("hidden");
+    }
+
+    function closeProfileModal() {
+      document.getElementById("modal-student-profile").classList.add("hidden");
+    }
+
+    // =====================================================================
+    // 4. ROOMS (3 SEPARATE ROOMS: STUDENTS ONLY, TEACHER-STUDENT, ALL DEPT)
+    // =====================================================================
+    function switchDiscussionRoom(roomKey) {
+      state.activeDiscussionRoom = roomKey;
+
+      const c1 = document.getElementById("room-card-students_only");
+      const c2 = document.getElementById("room-card-teacher_student");
+      const c3 = document.getElementById("room-card-all_department");
+      const header = document.getElementById("chat-room-header");
+
+      const baseClass = "text-left p-4 rounded-2xl border-2 border-slate-200 bg-white hover:border-slate-300 transition flex items-start gap-3";
+      c1.className = baseClass;
+      c2.className = baseClass;
+      c3.className = baseClass;
+
+      if (roomKey === "students_only") {
+        c1.className = "text-left p-4 rounded-2xl border-2 border-emerald-500 bg-emerald-50/70 transition flex items-start gap-3";
+        header.className = "px-5 py-3.5 bg-emerald-900 text-white flex items-center justify-between";
+        document.getElementById("chat-header-icon").textContent = "🔒";
+        document.getElementById("chat-header-title").textContent = `Students-Only Room — ${state.activeSubject}`;
+        document.getElementById("chat-header-subtitle").textContent = "Private Peer Discussion • Teachers Strictly Not Allowed";
+        document.getElementById("chat-room-scope-badge").textContent = "Section Students Only";
+      } else if (roomKey === "teacher_student") {
+        c2.className = "text-left p-4 rounded-2xl border-2 border-brand-600 bg-brand-50/70 transition flex items-start gap-3";
+        header.className = "px-5 py-3.5 bg-brand-900 text-white flex items-center justify-between";
+        document.getElementById("chat-header-icon").textContent = "🎓";
+        document.getElementById("chat-header-title").textContent = `Teacher-Student Room — ${stat
+        <html>
