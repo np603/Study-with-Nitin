@@ -12,25 +12,27 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
   <script>
-    tailwind.config = {
-      theme: {
-        extend: {
-          fontFamily: {
-            sans: ['Inter', 'sans-serif'],
-            mono: ['JetBrains Mono', 'monospace'],
-          },
-          colors: {
-            brand: {
-              50: '#eef2ff',
-              100: '#e0e7ff',
-              500: '#6366f1',
-              600: '#4f46e5',
-              700: '#4338ca',
-              900: '#312e81',
+    if (window.tailwind) {
+      window.tailwind.config = {
+        theme: {
+          extend: {
+            fontFamily: {
+              sans: ['Inter', 'sans-serif'],
+              mono: ['JetBrains Mono', 'monospace'],
+            },
+            colors: {
+              brand: {
+                50: '#eef2ff',
+                100: '#e0e7ff',
+                500: '#6366f1',
+                600: '#4f46e5',
+                700: '#4338ca',
+                900: '#312e81',
+              }
             }
           }
         }
-      }
+      };
     }
   </script>
   <style>
@@ -42,7 +44,7 @@
 </head>
 <body class="bg-slate-50 text-slate-800 font-sans antialiased min-h-screen flex flex-col selection:bg-brand-100 selection:text-brand-900">
 
-  <!-- Toast Notification Container (Replaces browser alert/confirm) -->
+  <!-- Toast Notification Container -->
   <div id="toast-container" class="fixed top-20 right-4 z-50 flex flex-col gap-2 max-w-sm w-full pointer-events-none px-4 sm:px-0"></div>
 
   <!-- ===================================================================== -->
@@ -394,18 +396,26 @@
   <!-- VIEW 3: EXCLUSIVE TEACHER PORTAL (PIN PROTECTED - PIN: 2026)          -->
   <!-- ===================================================================== -->
   <main id="view-teacher-portal" class="hidden flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
-    <div class="bg-slate-900 text-white rounded-3xl p-6 mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-md">
+    <div class="bg-slate-900 text-white rounded-3xl p-6 mb-6 flex flex-col lg:flex-row lg:items-center justify-between gap-4 shadow-md">
       <div>
         <div class="flex items-center gap-2 mb-1">
           <span class="px-2.5 py-0.5 rounded-full bg-amber-400 text-slate-950 text-[11px] font-extrabold uppercase">Teacher Mode Active</span>
-          <span class="text-xs text-slate-400">PIN Verified</span>
+          <span class="text-xs text-slate-400">PIN Verified • Auto-Saved</span>
         </div>
         <h1 class="text-xl sm:text-2xl font-extrabold">Faculty Command Center & Material Publisher</h1>
         <p class="text-xs sm:text-sm text-slate-300 mt-1">Upload study materials, host live classes, monitor real-time student study hours, and answer doubts in Teacher-Student Rooms.</p>
       </div>
-      <button type="button" id="exit-teacher-btn" class="px-4 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-bold transition self-start sm:self-auto">
-        ← Switch to Student View
-      </button>
+      <div class="flex flex-wrap items-center gap-2 shrink-0">
+        <button type="button" id="share-sync-link-btn" class="px-3.5 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-500 text-white text-xs font-bold transition">
+          🔗 Copy Student Sync Link
+        </button>
+        <button type="button" id="reset-portal-data-btn" class="px-3.5 py-2.5 rounded-xl bg-rose-600/20 hover:bg-rose-600/40 text-rose-200 border border-rose-500/30 text-xs font-bold transition">
+          🗑️ Reset Data
+        </button>
+        <button type="button" id="exit-teacher-btn" class="px-4 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-bold transition">
+          ← Switch to Student View
+        </button>
+      </div>
     </div>
 
     <!-- Teacher Navigation Tabs -->
@@ -499,7 +509,7 @@
                 class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm font-medium"></textarea>
             </div>
             <div>
-              <label for="up-file" class="block text-xs font-bold text-slate-600 mb-1.5">10. Attach PDF / Image / Document (Optional)</label>
+              <label for="up-file" class="block text-xs font-bold text-slate-600 mb-1.5">10. Attach PDF / Image / Document (Optional, up to 1.5MB)</label>
               <input id="up-file" type="file" accept=".pdf,.png,.jpg,.jpeg,.webp,.txt,.doc,.docx"
                 class="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs text-slate-600 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-brand-50 file:text-brand-700 hover:file:bg-brand-100" />
             </div>
@@ -783,1093 +793,1046 @@
   </div>
 
   <!-- ===================================================================== -->
-  <!-- COMPLETE APPLICATION SCRIPT                                           -->
+  <!-- COMPLETE APPLICATION SCRIPT (INSTANT INIT + LOCALSTORAGE SYNC)        -->
   <!-- ===================================================================== -->
   <script>
-    "use strict";
+    (function () {
+      "use strict";
 
-    /**
-     * ACADEMIC DIRECTORY
-     * Includes Class 9th, 10th, 11th, 12th (Maths, Bio, Commerce, Arts, Agriculture)
-     * and College (B.Tech, MBBS, B.Sc, B.Com, BBA, BA, B.Pharma, B.Ed, B.Sc Nursing)
-     * with all respective branches, departments, years, and subjects.
-     */
-    const ACADEMIC_DATA = {
-      "Class 9th": {
-        step2Label: "2. Select Foundation Track",
-        years: ["Regular Batch", "Olympiad Foundation"],
-        courses: {
-          "All Subjects (CBSE / State)": {
-            step3Label: "3. Select Section",
-            branches: {
-              "Section A (Science & Maths)": ["Mathematics", "Science", "Social Science", "English", "Information Technology"],
-              "Section B (Science & Maths)": ["Mathematics", "Science", "Social Science", "English", "Information Technology"]
+      const STORAGE_KEY = "edupulse_cohort_portal_v2";
+      const TEACHER_PIN = "2026";
+      const MATERIAL_TYPES = ["All", "Books", "Notes", "Formula", "Short Notes", "Mindmaps", "PYQs", "Model Paper", "Tests"];
+
+      /**
+       * ACADEMIC DIRECTORY
+       * Class 9th, 10th, 11th, 12th (Maths, Bio, Commerce, Arts, Agriculture)
+       * and College (B.Tech, MBBS, B.Sc, B.Com, BBA, BA, B.Pharma, B.Ed, B.Sc Nursing)
+       * with all respective branches, departments, years, and subjects.
+       */
+      const ACADEMIC_DATA = {
+        "Class 9th": {
+          step2Label: "2. Select Foundation Track",
+          years: ["Regular Batch", "Olympiad Foundation"],
+          courses: {
+            "All Subjects (CBSE / State)": {
+              step3Label: "3. Select Section",
+              branches: {
+                "Section A (Science & Maths)": ["Mathematics", "Science", "Social Science", "English", "Information Technology"],
+                "Section B (Science & Maths)": ["Mathematics", "Science", "Social Science", "English", "Information Technology"]
+              }
+            }
+          }
+        },
+        "Class 10th": {
+          step2Label: "2. Select Board Track",
+          years: ["Board Batch", "NTSE Foundation"],
+          courses: {
+            "Board Core Subjects": {
+              step3Label: "3. Select Section",
+              branches: {
+                "Section A (Standard Maths)": ["Mathematics (Standard)", "Science", "Social Science", "English", "Computer Applications"],
+                "Section B (Basic Maths)": ["Mathematics (Basic)", "Science", "Social Science", "English", "Computer Applications"]
+              }
+            }
+          }
+        },
+        "Class 11th": {
+          step2Label: "2. Select Stream (Maths, Bio, Commerce, Arts, Agriculture)",
+          years: ["Class 11th"],
+          courses: {
+            "Maths (PCM)": {
+              step3Label: "3. Select Section / Group",
+              branches: {
+                "PCM + Computer Science": ["Physics", "Chemistry", "Mathematics", "Computer Science", "English"],
+                "PCM + Physical Education": ["Physics", "Chemistry", "Mathematics", "Physical Education", "English"]
+              }
+            },
+            "Bio (PCB)": {
+              step3Label: "3. Select Section / Group",
+              branches: {
+                "PCB + Biotechnology": ["Physics", "Chemistry", "Biology", "Biotechnology", "English"],
+                "PCMB (Maths + Bio)": ["Physics", "Chemistry", "Biology", "Mathematics", "English"]
+              }
+            },
+            "Commerce": {
+              step3Label: "3. Select Section / Group",
+              branches: {
+                "Commerce + Applied Maths": ["Accountancy", "Business Studies", "Economics", "Applied Mathematics", "English"],
+                "Commerce + Informatics": ["Accountancy", "Business Studies", "Economics", "Informatics Practices", "English"]
+              }
+            },
+            "Arts / Humanities": {
+              step3Label: "3. Select Section / Group",
+              branches: {
+                "Humanities Core": ["History", "Political Science", "Geography", "Economics", "Psychology"]
+              }
+            },
+            "Agriculture": {
+              step3Label: "3. Select Section / Group",
+              branches: {
+                "Agricultural Sciences": ["Agronomy", "Horticulture", "Soil Science", "Agricultural Chemistry", "Animal Husbandry"]
+              }
+            }
+          }
+        },
+        "Class 12th": {
+          step2Label: "2. Select Stream (Maths, Bio, Commerce, Arts, Agriculture)",
+          years: ["Class 12th"],
+          courses: {
+            "Maths (PCM)": {
+              step3Label: "3. Select Section / Track",
+              branches: {
+                "PCM + JEE / Board Section": ["Physics", "Chemistry", "Mathematics", "Computer Science", "English"]
+              }
+            },
+            "Bio (PCB)": {
+              step3Label: "3. Select Section / Track",
+              branches: {
+                "PCB + NEET / Board Section": ["Physics", "Chemistry", "Biology", "English", "Physical Education"]
+              }
+            },
+            "Commerce": {
+              step3Label: "3. Select Section / Track",
+              branches: {
+                "Commerce + CUET Section": ["Accountancy", "Business Studies", "Economics", "Applied Mathematics", "English"]
+              }
+            },
+            "Arts / Humanities": {
+              step3Label: "3. Select Section / Track",
+              branches: {
+                "Humanities + CUET Section": ["History", "Political Science", "Economics", "Sociology", "Psychology"]
+              }
+            },
+            "Agriculture": {
+              step3Label: "3. Select Section / Track",
+              branches: {
+                "Senior Secondary Agriculture": ["Crop Production", "Horticulture", "Agricultural Biology", "Soil & Water Conservation", "Agri Economics"]
+              }
+            }
+          }
+        },
+        "College": {
+          step2Label: "2. Select Degree Course",
+          years: ["1st Year", "2nd Year", "3rd Year", "4th Year"],
+          courses: {
+            "B.Tech": {
+              step3Label: "3. Select Engineering Branch / Department",
+              branches: {
+                "Computer Science & Engg (CSE)": ["Data Structures & Algorithms", "Operating Systems", "Database Management (DBMS)", "Computer Networks", "Artificial Intelligence"],
+                "Information Technology (IT)": ["Web Engineering", "Software Engineering", "Cloud Computing", "Cyber Security", "Data Mining"],
+                "Electronics & Comm. (ECE)": ["Analog & Digital Circuits", "Signals & Systems", "Microprocessors", "VLSI Design", "Control Systems"],
+                "Electrical Engineering (EE)": ["Power Systems", "Electrical Machines", "Power Electronics", "Network Theory", "Electromagnetics"],
+                "Mechanical Engineering (ME)": ["Thermodynamics", "Fluid Mechanics", "Strength of Materials", "Theory of Machines", "Manufacturing Processes"],
+                "Civil Engineering (CE)": ["Structural Analysis", "Geotechnical Engineering", "Surveying", "Transportation Engineering", "Environmental Engg"],
+                "AI & Data Science": ["Machine Learning", "Deep Learning", "Statistical Modeling", "Natural Language Processing", "Big Data Analytics"]
+              }
+            },
+            "MBBS": {
+              step3Label: "3. Select Medical Department / Phase",
+              branches: {
+                "Pre-Clinical Phase": ["Human Anatomy", "Medical Physiology", "Biochemistry"],
+                "Para-Clinical Phase": ["Pathology", "Pharmacology", "Microbiology", "Forensic Medicine"],
+                "Clinical Phase": ["General Medicine", "General Surgery", "Pediatrics", "Obstetrics & Gynecology"]
+              }
+            },
+            "B.Sc": {
+              step3Label: "3. Select Science Department",
+              branches: {
+                "Physics Honours": ["Quantum Mechanics", "Classical Mechanics", "Electrodynamics", "Solid State Physics"],
+                "Chemistry Honours": ["Organic Chemistry", "Inorganic Chemistry", "Physical Chemistry", "Analytical Techniques"],
+                "Mathematics Honours": ["Real Analysis", "Linear Algebra", "Differential Equations", "Abstract Algebra"],
+                "Biotechnology & Zoology": ["Cell & Molecular Biology", "Genetics", "Immunology", "Ecology & Evolution"],
+                "Computer Science": ["C++ & Java Programming", "Discrete Mathematics", "Database Systems", "Web Development"]
+              }
+            },
+            "B.Com": {
+              step3Label: "3. Select Commerce Department",
+              branches: {
+                "Accounting & Finance": ["Financial Accounting", "Corporate Accounting", "Cost & Management Accounting", "Auditing"],
+                "Banking & Insurance": ["Banking Law & Practice", "Financial Markets", "Insurance Risk Management"],
+                "Taxation & Corporate Law": ["Income Tax Law", "GST & Indirect Taxes", "Business Regulatory Framework"]
+              }
+            },
+            "BBA": {
+              step3Label: "3. Select Management Department",
+              branches: {
+                "Finance Management": ["Corporate Finance", "Investment & Portfolio Mgmt", "Financial Statement Analysis"],
+                "Marketing Management": ["Marketing Principles", "Consumer Behavior", "Digital & Brand Marketing"],
+                "Human Resource (HR)": ["Organizational Behavior", "Talent Management", "Industrial Relations"]
+              }
+            },
+            "BA": {
+              step3Label: "3. Select Arts Department",
+              branches: {
+                "History & Archaeology": ["Ancient Indian History", "Medieval World", "Modern Indian History"],
+                "Political Science": ["Political Theory", "Indian Constitution", "International Relations"],
+                "Economics": ["Microeconomics", "Macroeconomics", "Indian Economic Development", "Econometrics"],
+                "Psychology": ["Cognitive Psychology", "Developmental Psychology", "Clinical & Social Psychology"]
+              }
+            },
+            "B.Pharma": {
+              step3Label: "3. Select Pharmacy Department",
+              branches: {
+                "Pharmaceutics": ["Physical Pharmaceutics", "Pharmaceutical Engineering", "Biopharmaceutics"],
+                "Pharmacology": ["Human Anatomy & Physiology", "Pathophysiology", "Clinical Pharmacology"],
+                "Pharmaceutical Chemistry": ["Medicinal Chemistry", "Pharmaceutical Analysis", "Organic Chemistry"]
+              }
+            },
+            "B.Ed": {
+              step3Label: "3. Select Pedagogy Department",
+              branches: {
+                "Pedagogy of Science & Maths": ["Teaching of Physical Science", "Teaching of Mathematics", "Childhood & Growing Up"],
+                "Pedagogy of Social Science & Lang": ["Teaching of Social Studies", "Teaching of English", "Assessment for Learning"]
+              }
+            },
+            "B.Sc Nursing": {
+              step3Label: "3. Select Nursing Department",
+              branches: {
+                "Medical-Surgical Nursing": ["Adult Health Nursing", "Anatomy & Physiology", "Applied Nutrition & Pharmacology"],
+                "Community & Child Health": ["Pediatric Nursing", "Community Health Nursing", "Midwifery & Obstetrical Nursing"]
+              }
             }
           }
         }
-      },
-      "Class 10th": {
-        step2Label: "2. Select Board Track",
-        years: ["Board Batch", "NTSE Foundation"],
-        courses: {
-          "Board Core Subjects": {
-            step3Label: "3. Select Section",
-            branches: {
-              "Section A (Standard Maths)": ["Mathematics (Standard)", "Science", "Social Science", "English", "Computer Applications"],
-              "Section B (Basic Maths)": ["Mathematics (Basic)", "Science", "Social Science", "English", "Computer Applications"]
-            }
-          }
-        }
-      },
-      "Class 11th": {
-        step2Label: "2. Select Stream (Maths, Bio, Commerce, Arts, Agriculture)",
-        years: ["Class 11th"],
-        courses: {
-          "Maths (PCM)": {
-            step3Label: "3. Select Section / Group",
-            branches: {
-              "PCM + Computer Science": ["Physics", "Chemistry", "Mathematics", "Computer Science", "English"],
-              "PCM + Physical Education": ["Physics", "Chemistry", "Mathematics", "Physical Education", "English"]
-            }
-          },
-          "Bio (PCB)": {
-            step3Label: "3. Select Section / Group",
-            branches: {
-              "PCB + Biotechnology": ["Physics", "Chemistry", "Biology", "Biotechnology", "English"],
-              "PCMB (Maths + Bio)": ["Physics", "Chemistry", "Biology", "Mathematics", "English"]
-            }
-          },
-          "Commerce": {
-            step3Label: "3. Select Section / Group",
-            branches: {
-              "Commerce + Applied Maths": ["Accountancy", "Business Studies", "Economics", "Applied Mathematics", "English"],
-              "Commerce + Informatics": ["Accountancy", "Business Studies", "Economics", "Informatics Practices", "English"]
-            }
-          },
-          "Arts / Humanities": {
-            step3Label: "3. Select Section / Group",
-            branches: {
-              "Humanities Core": ["History", "Political Science", "Geography", "Economics", "Psychology"]
-            }
-          },
-          "Agriculture": {
-            step3Label: "3. Select Section / Group",
-            branches: {
-              "Agricultural Sciences": ["Agronomy", "Horticulture", "Soil Science", "Agricultural Chemistry", "Animal Husbandry"]
-            }
-          }
-        }
-      },
-      "Class 12th": {
-        step2Label: "2. Select Stream (Maths, Bio, Commerce, Arts, Agriculture)",
-        years: ["Class 12th"],
-        courses: {
-          "Maths (PCM)": {
-            step3Label: "3. Select Section / Track",
-            branches: {
-              "PCM + JEE / Board Section": ["Physics", "Chemistry", "Mathematics", "Computer Science", "English"]
-            }
-          },
-          "Bio (PCB)": {
-            step3Label: "3. Select Section / Track",
-            branches: {
-              "PCB + NEET / Board Section": ["Physics", "Chemistry", "Biology", "English", "Physical Education"]
-            }
-          },
-          "Commerce": {
-            step3Label: "3. Select Section / Track",
-            branches: {
-              "Commerce + CUET Section": ["Accountancy", "Business Studies", "Economics", "Applied Mathematics", "English"]
-            }
-          },
-          "Arts / Humanities": {
-            step3Label: "3. Select Section / Track",
-            branches: {
-              "Humanities + CUET Section": ["History", "Political Science", "Economics", "Sociology", "Psychology"]
-            }
-          },
-          "Agriculture": {
-            step3Label: "3. Select Section / Track",
-            branches: {
-              "Senior Secondary Agriculture": ["Crop Production", "Horticulture", "Agricultural Biology", "Soil & Water Conservation", "Agri Economics"]
-            }
-          }
-        }
-      },
-      "College": {
-        step2Label: "2. Select Degree Course",
-        years: ["1st Year", "2nd Year", "3rd Year", "4th Year"],
-        courses: {
-          "B.Tech": {
-            step3Label: "3. Select Engineering Branch / Department",
-            branches: {
-              "Computer Science & Engg (CSE)": ["Data Structures & Algorithms", "Operating Systems", "Database Management (DBMS)", "Computer Networks", "Artificial Intelligence"],
-              "Information Technology (IT)": ["Web Engineering", "Software Engineering", "Cloud Computing", "Cyber Security", "Data Mining"],
-              "Electronics & Comm. (ECE)": ["Analog & Digital Circuits", "Signals & Systems", "Microprocessors", "VLSI Design", "Control Systems"],
-              "Electrical Engineering (EE)": ["Power Systems", "Electrical Machines", "Power Electronics", "Network Theory", "Electromagnetics"],
-              "Mechanical Engineering (ME)": ["Thermodynamics", "Fluid Mechanics", "Strength of Materials", "Theory of Machines", "Manufacturing Processes"],
-              "Civil Engineering (CE)": ["Structural Analysis", "Geotechnical Engineering", "Surveying", "Transportation Engineering", "Environmental Engg"],
-              "AI & Data Science": ["Machine Learning", "Deep Learning", "Statistical Modeling", "Natural Language Processing", "Big Data Analytics"]
-            }
-          },
-          "MBBS": {
-            step3Label: "3. Select Medical Department / Phase",
-            branches: {
-              "Pre-Clinical Phase": ["Human Anatomy", "Medical Physiology", "Biochemistry"],
-              "Para-Clinical Phase": ["Pathology", "Pharmacology", "Microbiology", "Forensic Medicine"],
-              "Clinical Phase": ["General Medicine", "General Surgery", "Pediatrics", "Obstetrics & Gynecology"]
-            }
-          },
-          "B.Sc": {
-            step3Label: "3. Select Science Department",
-            branches: {
-              "Physics Honours": ["Quantum Mechanics", "Classical Mechanics", "Electrodynamics", "Solid State Physics"],
-              "Chemistry Honours": ["Organic Chemistry", "Inorganic Chemistry", "Physical Chemistry", "Analytical Techniques"],
-              "Mathematics Honours": ["Real Analysis", "Linear Algebra", "Differential Equations", "Abstract Algebra"],
-              "Biotechnology & Zoology": ["Cell & Molecular Biology", "Genetics", "Immunology", "Ecology & Evolution"],
-              "Computer Science": ["C++ & Java Programming", "Discrete Mathematics", "Database Systems", "Web Development"]
-            }
-          },
-          "B.Com": {
-            step3Label: "3. Select Commerce Department",
-            branches: {
-              "Accounting & Finance": ["Financial Accounting", "Corporate Accounting", "Cost & Management Accounting", "Auditing"],
-              "Banking & Insurance": ["Banking Law & Practice", "Financial Markets", "Insurance Risk Management"],
-              "Taxation & Corporate Law": ["Income Tax Law", "GST & Indirect Taxes", "Business Regulatory Framework"]
-            }
-          },
-          "BBA": {
-            step3Label: "3. Select Management Department",
-            branches: {
-              "Finance Management": ["Corporate Finance", "Investment & Portfolio Mgmt", "Financial Statement Analysis"],
-              "Marketing Management": ["Marketing Principles", "Consumer Behavior", "Digital & Brand Marketing"],
-              "Human Resource (HR)": ["Organizational Behavior", "Talent Management", "Industrial Relations"]
-            }
-          },
-          "BA": {
-            step3Label: "3. Select Arts Department",
-            branches: {
-              "History & Archaeology": ["Ancient Indian History", "Medieval World", "Modern Indian History"],
-              "Political Science": ["Political Theory", "Indian Constitution", "International Relations"],
-              "Economics": ["Microeconomics", "Macroeconomics", "Indian Economic Development", "Econometrics"],
-              "Psychology": ["Cognitive Psychology", "Developmental Psychology", "Clinical & Social Psychology"]
-            }
-          },
-          "B.Pharma": {
-            step3Label: "3. Select Pharmacy Department",
-            branches: {
-              "Pharmaceutics": ["Physical Pharmaceutics", "Pharmaceutical Engineering", "Biopharmaceutics"],
-              "Pharmacology": ["Human Anatomy & Physiology", "Pathophysiology", "Clinical Pharmacology"],
-              "Pharmaceutical Chemistry": ["Medicinal Chemistry", "Pharmaceutical Analysis", "Organic Chemistry"]
-            }
-          },
-          "B.Ed": {
-            step3Label: "3. Select Pedagogy Department",
-            branches: {
-              "Pedagogy of Science & Maths": ["Teaching of Physical Science", "Teaching of Mathematics", "Childhood & Growing Up"],
-              "Pedagogy of Social Science & Lang": ["Teaching of Social Studies", "Teaching of English", "Assessment for Learning"]
-            }
-          },
-          "B.Sc Nursing": {
-            step3Label: "3. Select Nursing Department",
-            branches: {
-              "Medical-Surgical Nursing": ["Adult Health Nursing", "Anatomy & Physiology", "Applied Nutrition & Pharmacology"],
-              "Community & Child Health": ["Pediatric Nursing", "Community Health Nursing", "Midwifery & Obstetrical Nursing"]
-            }
-          }
-        }
-      }
-    };
-
-    const MATERIAL_TYPES = ["All", "Books", "Notes", "Formula", "Short Notes", "Mindmaps", "PYQs", "Model Paper", "Tests"];
-    const TEACHER_PIN = "2026";
-
-    // Zero-Initialized Application State
-    const state = {
-      hasJoinedSection: false,
-      studentName: "",
-      selectedLevel: "",
-      selectedCourse: "",
-      selectedBranch: "",
-      selectedYear: "",
-      activeSubject: "",
-      activeStudentTab: "materials",
-      activeMaterialFilter: "All",
-      activeDiscussionRoom: "students_only",
-      isTeacherAuthenticated: false,
-
-      timerRunning: false,
-      timerSeconds: 0,
-      timerInterval: null,
-      todayStudyMinutes: 0,
-      streakDays: 0,
-      testsCompleted: 0,
-      totalTestScorePercent: 0,
-      subjectMinutes: {},
-
-      plannerTasks: [],
-      uploadedMaterials: [],
-      liveClasses: [],
-      quizBuilderCount: 0,
-
-      // Keyed room messages:
-      // students_only[subjectKey], teacher_student[subjectKey], all_department[deptKey]
-      messages: {
-        students_only: {},
-        teacher_student: {},
-        all_department: {}
-      },
-
-      checkedInStudents: []
-    };
-
-    // =====================================================================
-    // UTILITIES
-    // =====================================================================
-    function showToast(message, type = "info") {
-      const container = document.getElementById("toast-container");
-      const toast = document.createElement("div");
-      const styles = {
-        success: "bg-emerald-900 text-white border-emerald-700",
-        error: "bg-rose-900 text-white border-rose-700",
-        info: "bg-slate-900 text-white border-slate-700"
-      };
-      toast.className = `pointer-events-auto px-4 py-3 rounded-2xl border shadow-lg text-xs sm:text-sm font-semibold flex items-center justify-between gap-3 transition-all ${styles[type] || styles.info}`;
-      const span = document.createElement("span");
-      span.textContent = message;
-      const closeBtn = document.createElement("button");
-      closeBtn.type = "button";
-      closeBtn.className = "text-white/70 hover:text-white font-bold";
-      closeBtn.textContent = "✕";
-      closeBtn.addEventListener("click", () => toast.remove());
-      toast.append(span, closeBtn);
-      container.appendChild(toast);
-      setTimeout(() => {
-        if (toast.parentElement) toast.remove();
-      }, 4000);
-    }
-
-    function escapeHtml(str) {
-      return String(str)
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;")
-        .replace(/'/g, "&#039;");
-    }
-
-    function getActiveSubjectRoomKey() {
-      return `${state.selectedLevel}|${state.selectedCourse}|${state.selectedBranch}|${state.selectedYear}|${state.activeSubject}`;
-    }
-
-    function getActiveDepartmentRoomKey() {
-      return `${state.selectedLevel}|${state.selectedCourse}|${state.selectedBranch}`;
-    }
-
-    // =====================================================================
-    // VIEW 1: SECTION SELECTION WIZARD
-    // =====================================================================
-    function renderSectionWizard() {
-      const levelContainer = document.getElementById("level-options");
-      levelContainer.innerHTML = "";
-
-      Object.keys(ACADEMIC_DATA).forEach(level => {
-        const active = state.selectedLevel === level;
-        const btn = document.createElement("button");
-        btn.type = "button";
-        btn.className = `py-3 px-3 rounded-2xl border-2 text-xs sm:text-sm font-bold transition ${
-          active ? "border-brand-600 bg-brand-50 text-brand-700" : "border-slate-200 bg-white text-slate-700 hover:border-brand-300"
-        }`;
-        btn.textContent = level;
-        btn.addEventListener("click", () => selectLevel(level));
-        levelContainer.appendChild(btn);
-      });
-
-      updateWizardProgress();
-    }
-
-    function selectLevel(level) {
-      state.selectedLevel = level;
-      state.selectedCourse = "";
-      state.selectedBranch = "";
-      state.selectedYear = "";
-
-      renderSectionWizard();
-
-      const levelObj = ACADEMIC_DATA[level];
-      const step2 = document.getElementById("step-2-container");
-      const courseContainer = document.getElementById("course-options");
-      document.getElementById("step-2-label").textContent = levelObj.step2Label;
-
-      step2.classList.remove("hidden");
-      document.getElementById("step-3-container").classList.add("hidden");
-      document.getElementById("step-4-container").classList.add("hidden");
-      document.getElementById("subject-preview-box").classList.add("hidden");
-
-      courseContainer.innerHTML = "";
-      const courses = Object.keys(levelObj.courses);
-      courses.forEach(course => {
-        const btn = document.createElement("button");
-        btn.type = "button";
-        btn.dataset.course = course;
-        btn.className = "course-opt-btn py-3 px-3.5 rounded-2xl border-2 border-slate-200 bg-white text-slate-700 hover:border-brand-300 text-xs sm:text-sm font-bold text-left transition";
-        btn.textContent = course;
-        btn.addEventListener("click", () => selectCourse(course));
-        courseContainer.appendChild(btn);
-      });
-
-      if (courses.length === 1) {
-        selectCourse(courses[0]);
-      } else {
-        updateWizardProgress();
-      }
-    }
-
-    function selectCourse(course) {
-      state.selectedCourse = course;
-      state.selectedBranch = "";
-      state.selectedYear = "";
-
-      document.querySelectorAll(".course-opt-btn").forEach(btn => {
-        const isSelected = btn.dataset.course === course;
-        btn.className = `course-opt-btn py-3 px-3.5 rounded-2xl border-2 text-xs sm:text-sm font-bold text-left transition ${
-          isSelected ? "border-brand-600 bg-brand-50 text-brand-700" : "border-slate-200 bg-white text-slate-700 hover:border-brand-300"
-        }`;
-      });
-
-      const courseObj = ACADEMIC_DATA[state.selectedLevel].courses[course];
-      const step3 = document.getElementById("step-3-container");
-      const branchContainer = document.getElementById("branch-options");
-      document.getElementById("step-3-label").textContent = courseObj.step3Label;
-
-      step3.classList.remove("hidden");
-      document.getElementById("step-4-container").classList.add("hidden");
-      document.getElementById("subject-preview-box").classList.add("hidden");
-
-      branchContainer.innerHTML = "";
-      const branches = Object.keys(courseObj.branches);
-      branches.forEach(branch => {
-        const btn = document.createElement("button");
-        btn.type = "button";
-        btn.dataset.branch = branch;
-        btn.className = "branch-opt-btn py-3 px-4 rounded-2xl border-2 border-slate-200 bg-white text-slate-700 hover:border-brand-300 text-xs sm:text-sm font-bold text-left transition";
-        btn.textContent = branch;
-        btn.addEventListener("click", () => selectBranch(branch));
-        branchContainer.appendChild(btn);
-      });
-
-      if (branches.length === 1) {
-        selectBranch(branches[0]);
-      } else {
-        updateWizardProgress();
-      }
-    }
-
-    function selectBranch(branch) {
-      state.selectedBranch = branch;
-      state.selectedYear = "";
-
-      document.querySelectorAll(".branch-opt-btn").forEach(btn => {
-        const isSelected = btn.dataset.branch === branch;
-        btn.className = `branch-opt-btn py-3 px-4 rounded-2xl border-2 text-xs sm:text-sm font-bold text-left transition ${
-          isSelected ? "border-brand-600 bg-brand-50 text-brand-700" : "border-slate-200 bg-white text-slate-700 hover:border-brand-300"
-        }`;
-      });
-
-      const years = ACADEMIC_DATA[state.selectedLevel].years;
-      const step4 = document.getElementById("step-4-container");
-      const yearContainer = document.getElementById("year-options");
-      step4.classList.remove("hidden");
-
-      yearContainer.innerHTML = "";
-      years.forEach(yr => {
-        const btn = document.createElement("button");
-        btn.type = "button";
-        btn.dataset.year = yr;
-        btn.className = "year-opt-btn py-3 px-3 rounded-2xl border-2 border-slate-200 bg-white text-slate-700 hover:border-brand-300 text-xs sm:text-sm font-bold transition";
-        btn.textContent = yr;
-        btn.addEventListener("click", () => selectYear(yr));
-        yearContainer.appendChild(btn);
-      });
-
-      if (years.length === 1) {
-        selectYear(years[0]);
-      } else {
-        updateWizardProgress();
-      }
-    }
-
-    function selectYear(year) {
-      state.selectedYear = year;
-
-      document.querySelectorAll(".year-opt-btn").forEach(btn => {
-        const isSelected = btn.dataset.year === year;
-        btn.className = `year-opt-btn py-3 px-3 rounded-2xl border-2 text-xs sm:text-sm font-bold transition ${
-          isSelected ? "border-brand-600 bg-brand-50 text-brand-700" : "border-slate-200 bg-white text-slate-700 hover:border-brand-300"
-        }`;
-      });
-
-      const subjects = ACADEMIC_DATA[state.selectedLevel].courses[state.selectedCourse].branches[state.selectedBranch] || [];
-      const previewBox = document.getElementById("subject-preview-box");
-      const previewPills = document.getElementById("subject-preview-pills");
-      previewBox.classList.remove("hidden");
-      previewPills.innerHTML = subjects.map(sub =>
-        `<span class="px-3 py-1 rounded-full bg-white border border-slate-200 text-xs font-semibold text-slate-700">${escapeHtml(sub)}</span>`
-      ).join("");
-
-      updateWizardProgress();
-    }
-
-    function updateWizardProgress() {
-      let step = 1;
-      if (state.selectedLevel) step = 2;
-      if (state.selectedCourse) step = 3;
-      if (state.selectedBranch) step = 4;
-      document.getElementById("wizard-step-badge").textContent = `Step ${step} of 4`;
-
-      const btn = document.getElementById("join-cohort-btn");
-      btn.disabled = !(state.selectedLevel && state.selectedCourse && state.selectedBranch && state.selectedYear);
-    }
-
-    function completeSectionSelection() {
-      const nameInput = document.getElementById("student-name-input").value.trim();
-      state.studentName = nameInput || "Student";
-      state.hasJoinedSection = true;
-
-      const subjects = ACADEMIC_DATA[state.selectedLevel].courses[state.selectedCourse].branches[state.selectedBranch];
-      state.activeSubject = subjects[0];
-
-      subjects.forEach(sub => {
-        if (typeof state.subjectMinutes[sub] !== "number") {
-          state.subjectMinutes[sub] = 0;
-        }
-      });
-
-      const cohortLabel = `${state.selectedLevel} • ${state.selectedCourse} • ${state.selectedBranch} (${state.selectedYear})`;
-      const existingIdx = state.checkedInStudents.findIndex(s => s.name === state.studentName);
-      if (existingIdx === -1) {
-        state.checkedInStudents.push({
-          name: state.studentName,
-          cohort: cohortLabel,
-          minutesToday: state.todayStudyMinutes,
-          testsCompleted: state.testsCompleted,
-          avgScore: 0
-        });
-      } else {
-        state.checkedInStudents[existingIdx].cohort = cohortLabel;
-      }
-
-      const initials = state.studentName.split(" ").map(p => p[0]).join("").toUpperCase().slice(0, 2) || "S";
-      document.getElementById("topbar-avatar-initials").textContent = initials;
-      document.getElementById("topbar-student-name").textContent = state.studentName;
-      document.getElementById("header-cohort-sub").textContent = cohortLabel;
-      document.getElementById("dashboard-cohort-heading").textContent = cohortLabel;
-      document.getElementById("dept-room-label").textContent = `${state.selectedCourse} — ${state.selectedBranch}`;
-
-      const topTools = document.getElementById("student-topbar-tools");
-      topTools.classList.remove("hidden");
-      topTools.classList.add("flex");
-
-      document.getElementById("view-section-select").classList.add("hidden");
-      document.getElementById("view-teacher-portal").classList.add("hidden");
-      document.getElementById("view-student-dashboard").classList.remove("hidden");
-
-      renderSubjectTabs();
-      renderMaterialFilterPills();
-      renderMaterialsList();
-      renderLiveClassesList();
-      renderStudyTrackerUI();
-      switchDiscussionRoom(state.activeDiscussionRoom);
-      updatePlannerBadge();
-
-      showToast(`Welcome, ${state.studentName}! Your study workspace is ready.`, "success");
-    }
-
-    function goToSectionSelection() {
-      document.getElementById("view-student-dashboard").classList.add("hidden");
-      document.getElementById("view-teacher-portal").classList.add("hidden");
-      document.getElementById("view-section-select").classList.remove("hidden");
-      renderSectionWizard();
-    }
-
-    // =====================================================================
-    // VIEW 2: STUDENT PERSONAL PAGE
-    // =====================================================================
-    function switchStudentTab(tabName) {
-      state.activeStudentTab = tabName;
-
-      ["materials", "live", "tracker", "rooms"].forEach(t => {
-        const sec = document.getElementById(`student-section-${t}`);
-        const navBtn = document.getElementById(`bottom-nav-${t}`);
-        if (t === tabName) {
-          sec.classList.remove("hidden");
-          navBtn.className = "bottom-nav-btn flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 py-2 px-1 sm:px-3 rounded-2xl bg-brand-50 text-brand-700 font-extrabold transition";
-        } else {
-          sec.classList.add("hidden");
-          navBtn.className = "bottom-nav-btn flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 py-2 px-1 sm:px-3 rounded-2xl text-slate-600 hover:bg-slate-100 font-bold transition";
-        }
-      });
-
-      if (tabName === "materials") renderMaterialsList();
-      if (tabName === "live") renderLiveClassesList();
-      if (tabName === "tracker") renderStudyTrackerUI();
-      if (tabName === "rooms") renderDiscussionFeed();
-    }
-
-    function renderSubjectTabs() {
-      const subjects = ACADEMIC_DATA[state.selectedLevel].courses[state.selectedCourse].branches[state.selectedBranch] || [];
-      const container = document.getElementById("subject-room-tabs");
-      container.innerHTML = "";
-
-      subjects.forEach(sub => {
-        const active = state.activeSubject === sub;
-        const btn = document.createElement("button");
-        btn.type = "button";
-        btn.className = `px-3.5 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition ${
-          active ? "bg-slate-900 text-white shadow-xs" : "bg-slate-100 text-slate-600 hover:bg-slate-200"
-        }`;
-        btn.textContent = sub;
-        btn.addEventListener("click", () => {
-          state.activeSubject = sub;
-          renderSubjectTabs();
-          renderMaterialsList();
-          renderLiveClassesList();
-          renderStudyTrackerUI();
-          renderDiscussionFeed();
-        });
-        container.appendChild(btn);
-      });
-
-      document.querySelectorAll(".active-subj-name").forEach(el => {
-        el.textContent = state.activeSubject;
-      });
-    }
-
-    function renderMaterialFilterPills() {
-      const container = document.getElementById("material-type-filters");
-      container.innerHTML = "";
-
-      MATERIAL_TYPES.forEach(type => {
-        const active = state.activeMaterialFilter === type;
-        const btn = document.createElement("button");
-        btn.type = "button";
-        btn.className = `px-3.5 py-1.5 rounded-full text-xs font-bold whitespace-nowrap border transition ${
-          active ? "bg-brand-600 text-white border-brand-600" : "bg-white text-slate-600 border-slate-200 hover:border-brand-300"
-        }`;
-        btn.textContent = type;
-        btn.addEventListener("click", () => {
-          state.activeMaterialFilter = type;
-          renderMaterialFilterPills();
-          renderMaterialsList();
-        });
-        container.appendChild(btn);
-      });
-    }
-
-    function renderMaterialsList() {
-      const container = document.getElementById("materials-container");
-      const matching = state.uploadedMaterials.filter(item => {
-        const sameCohort =
-          item.level === state.selectedLevel &&
-          item.course === state.selectedCourse &&
-          item.branch === state.selectedBranch &&
-          item.year === state.selectedYear &&
-          item.subject === state.activeSubject;
-        const sameType = state.activeMaterialFilter === "All" || item.type === state.activeMaterialFilter;
-        return sameCohort && sameType;
-      });
-
-      if (matching.length === 0) {
-        container.innerHTML = `
-          <div class="bg-white rounded-3xl border border-dashed border-slate-300 p-10 text-center">
-            <div class="w-14 h-14 rounded-2xl bg-slate-100 text-slate-500 flex items-center justify-center text-2xl mx-auto mb-3">📭</div>
-            <h3 class="font-extrabold text-slate-900 text-base">No Study Materials Uploaded Yet</h3>
-            <p class="text-xs sm:text-sm text-slate-500 max-w-md mx-auto mt-1">
-              Your subject teacher has not uploaded any <strong>${escapeHtml(state.activeMaterialFilter === 'All' ? 'Books, Notes, Formulas, PYQs, or Tests' : state.activeMaterialFilter)}</strong> for <strong>${escapeHtml(state.activeSubject)}</strong> yet.
-            </p>
-            <button type="button" id="empty-materials-teacher-btn" class="mt-4 px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold transition">
-              🔐 Teacher Login to Upload Materials
-            </button>
-          </div>
-        `;
-        document.getElementById("empty-materials-teacher-btn").addEventListener("click", openTeacherPinModal);
-        return;
-      }
-
-      const typeIcons = {
-        "Books": "📘",
-        "Notes": "📝",
-        "Formula": "📐",
-        "Short Notes": "⚡",
-        "Mindmaps": "🧠",
-        "PYQs": "📜",
-        "Model Paper": "📄",
-        "Tests": "✅"
       };
 
-      const grid = document.createElement("div");
-      grid.className = "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4";
+      // Default Zero-Initialized Application State
+      const state = {
+        hasJoinedSection: false,
+        studentName: "",
+        selectedLevel: "",
+        selectedCourse: "",
+        selectedBranch: "",
+        selectedYear: "",
+        activeSubject: "",
+        activeStudentTab: "materials",
+        activeMaterialFilter: "All",
+        activeDiscussionRoom: "students_only",
+        isTeacherAuthenticated: false,
 
-      matching.forEach(item => {
-        const card = document.createElement("div");
-        card.className = "bg-white rounded-2xl border border-slate-200 p-5 flex flex-col justify-between hover:border-brand-300 transition shadow-xs";
-        card.innerHTML = `
-          <div>
-            <div class="flex items-center justify-between gap-2 mb-3">
-              <span class="px-2.5 py-1 rounded-lg bg-brand-50 text-brand-700 text-xs font-bold">
-                ${typeIcons[item.type] || "📄"} ${escapeHtml(item.type)}
-              </span>
-              <span class="text-[11px] text-slate-400 font-medium">${escapeHtml(item.uploadedAt)}</span>
-            </div>
-            <h4 class="font-extrabold text-slate-900 text-sm sm:text-base leading-snug">${escapeHtml(item.title)}</h4>
-            <p class="text-xs text-slate-500 mt-1.5">By <strong class="text-slate-700">${escapeHtml(item.faculty)}</strong></p>
-            ${item.fileName ? `<p class="text-[11px] text-brand-600 font-semibold mt-1 truncate">📎 ${escapeHtml(item.fileName)}</p>` : ""}
-          </div>
-        `;
+        timerRunning: false,
+        timerSeconds: 0,
+        timerInterval: null,
+        todayStudyMinutes: 0,
+        streakDays: 0,
+        testsCompleted: 0,
+        totalTestScorePercent: 0,
+        subjectMinutes: {},
 
-        const openBtn = document.createElement("button");
-        openBtn.type = "button";
-        openBtn.className = `mt-5 w-full py-2.5 px-4 rounded-xl ${
-          item.type === "Tests" ? "bg-emerald-600 hover:bg-emerald-700" : "bg-slate-900 hover:bg-slate-800"
-        } text-white text-xs font-bold transition`;
-        openBtn.textContent = item.type === "Tests" ? `▶ Attempt MCQ Test (${item.questions.length} Qs)` : "📖 Open & Study";
-        openBtn.addEventListener("click", () => openMaterialViewer(item.id));
+        plannerTasks: [],
+        uploadedMaterials: [],
+        liveClasses: [],
+        quizBuilderCount: 0,
 
-        card.appendChild(openBtn);
-        grid.appendChild(card);
-      });
+        messages: {
+          students_only: {},
+          teacher_student: {},
+          all_department: {}
+        },
 
-      container.innerHTML = "";
-      container.appendChild(grid);
-    }
+        checkedInStudents: []
+      };
 
-    function openMaterialViewer(materialId) {
-      const item = state.uploadedMaterials.find(m => m.id === materialId);
-      if (!item) return;
+      // =====================================================================
+      // LOCALSTORAGE PERSISTENCE & URL SYNC
+      // =====================================================================
+      function savePersistentData() {
+        try {
+          const payload = {
+            hasJoinedSection: state.hasJoinedSection,
+            studentName: state.studentName,
+            selectedLevel: state.selectedLevel,
+            selectedCourse: state.selectedCourse,
+            selectedBranch: state.selectedBranch,
+            selectedYear: state.selectedYear,
+            activeSubject: state.activeSubject,
+            todayStudyMinutes: state.todayStudyMinutes,
+            streakDays: state.streakDays,
+            testsCompleted: state.testsCompleted,
+            totalTestScorePercent: state.totalTestScorePercent,
+            subjectMinutes: state.subjectMinutes,
+            plannerTasks: state.plannerTasks,
+            uploadedMaterials: state.uploadedMaterials,
+            liveClasses: state.liveClasses,
+            messages: state.messages,
+            checkedInStudents: state.checkedInStudents
+          };
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
+        } catch (err) {
+          // Handle quota exceeded gracefully (e.g., if large file attached)
+          showToast("Storage limit reached. Try attaching smaller files (< 1MB).", "error");
+        }
+      }
 
-      document.getElementById("viewer-badge").textContent = `${item.subject} • ${item.type}`;
-      document.getElementById("viewer-title").textContent = item.title;
-      document.getElementById("viewer-meta").textContent = `Published by ${item.faculty} • ${item.uploadedAt}`;
+      function loadPersistentData() {
+        try {
+          const raw = localStorage.getItem(STORAGE_KEY);
+          if (!raw) return;
+          const saved = JSON.parse(raw);
+          if (!saved || typeof saved !== "object") return;
 
-      const body = document.getElementById("viewer-body");
-      body.innerHTML = "";
+          state.hasJoinedSection = Boolean(saved.hasJoinedSection);
+          state.studentName = saved.studentName || "";
+          state.selectedLevel = saved.selectedLevel || "";
+          state.selectedCourse = saved.selectedCourse || "";
+          state.selectedBranch = saved.selectedBranch || "";
+          state.selectedYear = saved.selectedYear || "";
+          state.activeSubject = saved.activeSubject || "";
+          state.todayStudyMinutes = Number(saved.todayStudyMinutes) || 0;
+          state.streakDays = Number(saved.streakDays) || 0;
+          state.testsCompleted = Number(saved.testsCompleted) || 0;
+          state.totalTestScorePercent = Number(saved.totalTestScorePercent) || 0;
+          state.subjectMinutes = saved.subjectMinutes || {};
+          state.plannerTasks = Array.isArray(saved.plannerTasks) ? saved.plannerTasks : [];
+          state.uploadedMaterials = Array.isArray(saved.uploadedMaterials) ? saved.uploadedMaterials : [];
+          state.liveClasses = Array.isArray(saved.liveClasses) ? saved.liveClasses : [];
+          state.messages = saved.messages || { students_only: {}, teacher_student: {}, all_department: {} };
+          state.checkedInStudents = Array.isArray(saved.checkedInStudents) ? saved.checkedInStudents : [];
+        } catch (err) {
+          console.warn("Could not read saved state:", err);
+        }
+      }
 
-      if (item.type === "Tests" && item.questions && item.questions.length > 0) {
-        const answers = new Array(item.questions.length).fill(null);
+      function importSyncPayloadFromUrl() {
+        try {
+          const hash = window.location.hash;
+          if (!hash || !hash.startsWith("#sync=")) return;
+          const encoded = hash.slice(6);
+          const decodedJson = decodeURIComponent(escape(atob(encoded)));
+          const syncObj = JSON.parse(decodedJson);
 
-        item.questions.forEach((q, qIdx) => {
-          const qCard = document.createElement("div");
-          qCard.className = "p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-2.5";
-          qCard.innerHTML = `
-            <p class="text-xs font-bold uppercase text-brand-600">Question ${qIdx + 1} of ${item.questions.length}</p>
-            <p class="font-bold text-slate-900 text-sm sm:text-base">${escapeHtml(q.question)}</p>
-          `;
-
-          const optsWrap = document.createElement("div");
-          optsWrap.className = "space-y-2";
-
-          q.options.forEach((optText, optIdx) => {
-            const optBtn = document.createElement("button");
-            optBtn.type = "button";
-            optBtn.className = `q-opt-${qIdx} w-full text-left p-3 rounded-xl border-2 border-slate-200 bg-white hover:border-brand-500 font-semibold text-xs sm:text-sm transition`;
-            optBtn.textContent = `${String.fromCharCode(65 + optIdx)}. ${optText}`;
-            optBtn.addEventListener("click", () => {
-              answers[qIdx] = optIdx;
-              document.querySelectorAll(`.q-opt-${qIdx}`).forEach((b, i) => {
-                b.className = `q-opt-${qIdx} w-full text-left p-3 rounded-xl border-2 font-semibold text-xs sm:text-sm transition ${
-                  i === optIdx ? "border-brand-600 bg-brand-50 text-brand-800" : "border-slate-200 bg-white text-slate-700"
-                }`;
-              });
+          if (Array.isArray(syncObj.uploadedMaterials)) {
+            const existingIds = new Set(state.uploadedMaterials.map(m => m.id));
+            syncObj.uploadedMaterials.forEach(item => {
+              if (!existingIds.has(item.id)) {
+                state.uploadedMaterials.unshift(item);
+              }
             });
-            optsWrap.appendChild(optBtn);
-          });
+          }
+          if (Array.isArray(syncObj.liveClasses)) {
+            const existingLiveIds = new Set(state.liveClasses.map(l => l.id));
+            syncObj.liveClasses.forEach(lc => {
+              if (!existingLiveIds.has(lc.id)) {
+                state.liveClasses.unshift(lc);
+              }
+            });
+          }
+          savePersistentData();
+          history.replaceState(null, "", window.location.pathname + window.location.search);
+          showToast("Synced latest materials & live classes from teacher link!", "success");
+        } catch (err) {
+          console.warn("Sync link parse skipped:", err);
+        }
+      }
 
-          qCard.appendChild(optsWrap);
-          body.appendChild(qCard);
+      function copyTeacherSyncLink() {
+        try {
+          // Exclude heavy binary data URLs from URL hash so link stays compact
+          const compactMaterials = state.uploadedMaterials.map(m => ({
+            ...m,
+            fileUrl: null,
+            fileName: m.fileName ? `${m.fileName} (Ask faculty for file)` : null
+          }));
+          const syncPayload = {
+            uploadedMaterials: compactMaterials,
+            liveClasses: state.liveClasses
+          };
+          const jsonStr = JSON.stringify(syncPayload);
+          const encoded = btoa(unescape(encodeURIComponent(jsonStr)));
+          const baseUrl = window.location.href.split("#")[0];
+          const fullUrl = `${baseUrl}#sync=${encoded}`;
+
+          if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(fullUrl).then(() => {
+              showToast("Student Sync Link copied! Share it so students on any device get your uploads.", "success");
+            }).catch(() => {
+              prompt("Copy this Student Sync Link:", fullUrl);
+            });
+          } else {
+            prompt("Copy this Student Sync Link:", fullUrl);
+          }
+        } catch (err) {
+          showToast("Could not generate sync link.", "error");
+        }
+      }
+
+      function resetAllPortalData() {
+        localStorage.removeItem(STORAGE_KEY);
+        window.location.reload();
+      }
+
+      // =====================================================================
+      // UTILITIES
+      // =====================================================================
+      function showToast(message, type = "info") {
+        const container = document.getElementById("toast-container");
+        if (!container) return;
+        const toast = document.createElement("div");
+        const styles = {
+          success: "bg-emerald-900 text-white border-emerald-700",
+          error: "bg-rose-900 text-white border-rose-700",
+          info: "bg-slate-900 text-white border-slate-700"
+        };
+        toast.className = `pointer-events-auto px-4 py-3 rounded-2xl border shadow-lg text-xs sm:text-sm font-semibold flex items-center justify-between gap-3 transition-all ${styles[type] || styles.info}`;
+        const span = document.createElement("span");
+        span.textContent = message;
+        const closeBtn = document.createElement("button");
+        closeBtn.type = "button";
+        closeBtn.className = "text-white/70 hover:text-white font-bold";
+        closeBtn.textContent = "✕";
+        closeBtn.addEventListener("click", () => toast.remove());
+        toast.append(span, closeBtn);
+        container.appendChild(toast);
+        setTimeout(() => {
+          if (toast.parentElement) toast.remove();
+        }, 4200);
+      }
+
+      function escapeHtml(str) {
+        return String(str)
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;")
+          .replace(/'/g, "&#039;");
+      }
+
+      function getActiveSubjectRoomKey() {
+        return `${state.selectedLevel}|${state.selectedCourse}|${state.selectedBranch}|${state.selectedYear}|${state.activeSubject}`;
+      }
+
+      function getActiveDepartmentRoomKey() {
+        return `${state.selectedLevel}|${state.selectedCourse}|${state.selectedBranch}`;
+      }
+
+      // =====================================================================
+      // VIEW 1: SECTION SELECTION WIZARD
+      // =====================================================================
+      function renderSectionWizard() {
+        const levelContainer = document.getElementById("level-options");
+        levelContainer.innerHTML = "";
+
+        Object.keys(ACADEMIC_DATA).forEach(level => {
+          const active = state.selectedLevel === level;
+          const btn = document.createElement("button");
+          btn.type = "button";
+          btn.className = `py-3 px-3 rounded-2xl border-2 text-xs sm:text-sm font-bold transition ${
+            active ? "border-brand-600 bg-brand-50 text-brand-700" : "border-slate-200 bg-white text-slate-700 hover:border-brand-300"
+          }`;
+          btn.textContent = level;
+          btn.addEventListener("click", () => selectLevel(level));
+          levelContainer.appendChild(btn);
         });
 
-        const submitTestBtn = document.createElement("button");
-        submitTestBtn.type = "button";
-        submitTestBtn.className = "w-full py-3 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm transition";
-        submitTestBtn.textContent = "Submit Test & Record Score";
+        updateWizardProgress();
+      }
 
-        const resultBox = document.createElement("div");
-        resultBox.className = "hidden p-4 rounded-2xl text-xs sm:text-sm font-bold";
+      function selectLevel(level) {
+        state.selectedLevel = level;
+        state.selectedCourse = "";
+        state.selectedBranch = "";
+        state.selectedYear = "";
 
-        submitTestBtn.addEventListener("click", () => {
-          let correctCount = 0;
-          item.questions.forEach((q, idx) => {
-            if (answers[idx] === q.correctIndex) correctCount += 1;
-          });
-          const scorePct = Math.round((correctCount / item.questions.length) * 100);
+        renderSectionWizard();
 
-          state.testsCompleted += 1;
-          state.totalTestScorePercent += scorePct;
-          syncStudentAnalyticsRecord();
-          renderStudyTrackerUI();
+        const levelObj = ACADEMIC_DATA[level];
+        const step2 = document.getElementById("step-2-container");
+        const courseContainer = document.getElementById("course-options");
+        document.getElementById("step-2-label").textContent = levelObj.step2Label;
 
-          submitTestBtn.disabled = true;
-          submitTestBtn.classList.add("opacity-50", "cursor-not-allowed");
-          resultBox.classList.remove("hidden");
-          resultBox.className = "p-4 rounded-2xl text-xs sm:text-sm font-bold bg-emerald-100 text-emerald-900 border border-emerald-300";
-          resultBox.textContent = `✅ Test Submitted! You scored ${correctCount}/${item.questions.length} (${scorePct}%). Updated in Your Study Tracker.`;
-          showToast(`Test score (${scorePct}%) saved to Your Study Tracker!`, "success");
+        step2.classList.remove("hidden");
+        document.getElementById("step-3-container").classList.add("hidden");
+        document.getElementById("step-4-container").classList.add("hidden");
+        document.getElementById("subject-preview-box").classList.add("hidden");
+
+        courseContainer.innerHTML = "";
+        const courses = Object.keys(levelObj.courses);
+        courses.forEach(course => {
+          const btn = document.createElement("button");
+          btn.type = "button";
+          btn.dataset.course = course;
+          btn.className = "course-opt-btn py-3 px-3.5 rounded-2xl border-2 border-slate-200 bg-white text-slate-700 hover:border-brand-300 text-xs sm:text-sm font-bold text-left transition";
+          btn.textContent = course;
+          btn.addEventListener("click", () => selectCourse(course));
+          courseContainer.appendChild(btn);
         });
 
-        body.append(submitTestBtn, resultBox);
-      } else {
-        if (item.content) {
-          const textDiv = document.createElement("div");
-          textDiv.className = "whitespace-pre-wrap bg-slate-50 p-5 rounded-2xl border border-slate-200 text-slate-800 text-sm leading-relaxed";
-          textDiv.textContent = item.content;
-          body.appendChild(textDiv);
+        if (courses.length === 1) {
+          selectCourse(courses[0]);
+        } else {
+          updateWizardProgress();
+        }
+      }
+
+      function selectCourse(course) {
+        state.selectedCourse = course;
+        state.selectedBranch = "";
+        state.selectedYear = "";
+
+        document.querySelectorAll(".course-opt-btn").forEach(btn => {
+          const isSelected = btn.dataset.course === course;
+          btn.className = `course-opt-btn py-3 px-3.5 rounded-2xl border-2 text-xs sm:text-sm font-bold text-left transition ${
+            isSelected ? "border-brand-600 bg-brand-50 text-brand-700" : "border-slate-200 bg-white text-slate-700 hover:border-brand-300"
+          }`;
+        });
+
+        const courseObj = ACADEMIC_DATA[state.selectedLevel].courses[course];
+        const step3 = document.getElementById("step-3-container");
+        const branchContainer = document.getElementById("branch-options");
+        document.getElementById("step-3-label").textContent = courseObj.step3Label;
+
+        step3.classList.remove("hidden");
+        document.getElementById("step-4-container").classList.add("hidden");
+        document.getElementById("subject-preview-box").classList.add("hidden");
+
+        branchContainer.innerHTML = "";
+        const branches = Object.keys(courseObj.branches);
+        branches.forEach(branch => {
+          const btn = document.createElement("button");
+          btn.type = "button";
+          btn.dataset.branch = branch;
+          btn.className = "branch-opt-btn py-3 px-4 rounded-2xl border-2 border-slate-200 bg-white text-slate-700 hover:border-brand-300 text-xs sm:text-sm font-bold text-left transition";
+          btn.textContent = branch;
+          btn.addEventListener("click", () => selectBranch(branch));
+          branchContainer.appendChild(btn);
+        });
+
+        if (branches.length === 1) {
+          selectBranch(branches[0]);
+        } else {
+          updateWizardProgress();
+        }
+      }
+
+      function selectBranch(branch) {
+        state.selectedBranch = branch;
+        state.selectedYear = "";
+
+        document.querySelectorAll(".branch-opt-btn").forEach(btn => {
+          const isSelected = btn.dataset.branch === branch;
+          btn.className = `branch-opt-btn py-3 px-4 rounded-2xl border-2 text-xs sm:text-sm font-bold text-left transition ${
+            isSelected ? "border-brand-600 bg-brand-50 text-brand-700" : "border-slate-200 bg-white text-slate-700 hover:border-brand-300"
+          }`;
+        });
+
+        const years = ACADEMIC_DATA[state.selectedLevel].years;
+        const step4 = document.getElementById("step-4-container");
+        const yearContainer = document.getElementById("year-options");
+        step4.classList.remove("hidden");
+
+        yearContainer.innerHTML = "";
+        years.forEach(yr => {
+          const btn = document.createElement("button");
+          btn.type = "button";
+          btn.dataset.year = yr;
+          btn.className = "year-opt-btn py-3 px-3 rounded-2xl border-2 border-slate-200 bg-white text-slate-700 hover:border-brand-300 text-xs sm:text-sm font-bold transition";
+          btn.textContent = yr;
+          btn.addEventListener("click", () => selectYear(yr));
+          yearContainer.appendChild(btn);
+        });
+
+        if (years.length === 1) {
+          selectYear(years[0]);
+        } else {
+          updateWizardProgress();
+        }
+      }
+
+      function selectYear(year) {
+        state.selectedYear = year;
+
+        document.querySelectorAll(".year-opt-btn").forEach(btn => {
+          const isSelected = btn.dataset.year === year;
+          btn.className = `year-opt-btn py-3 px-3 rounded-2xl border-2 text-xs sm:text-sm font-bold transition ${
+            isSelected ? "border-brand-600 bg-brand-50 text-brand-700" : "border-slate-200 bg-white text-slate-700 hover:border-brand-300"
+          }`;
+        });
+
+        const subjects = ACADEMIC_DATA[state.selectedLevel].courses[state.selectedCourse].branches[state.selectedBranch] || [];
+        const previewBox = document.getElementById("subject-preview-box");
+        const previewPills = document.getElementById("subject-preview-pills");
+        previewBox.classList.remove("hidden");
+        previewPills.innerHTML = subjects.map(sub =>
+          `<span class="px-3 py-1 rounded-full bg-white border border-slate-200 text-xs font-semibold text-slate-700">${escapeHtml(sub)}</span>`
+        ).join("");
+
+        updateWizardProgress();
+      }
+
+      function updateWizardProgress() {
+        let step = 1;
+        if (state.selectedLevel) step = 2;
+        if (state.selectedCourse) step = 3;
+        if (state.selectedBranch) step = 4;
+        document.getElementById("wizard-step-badge").textContent = `Step ${step} of 4`;
+
+        const btn = document.getElementById("join-cohort-btn");
+        btn.disabled = !(state.selectedLevel && state.selectedCourse && state.selectedBranch && state.selectedYear);
+      }
+
+      function openStudentWorkspaceView(silent = false) {
+        const subjects = ACADEMIC_DATA[state.selectedLevel].courses[state.selectedCourse].branches[state.selectedBranch];
+        if (!state.activeSubject || !subjects.includes(state.activeSubject)) {
+          state.activeSubject = subjects[0];
         }
 
-        if (item.fileUrl) {
-          const fileBox = document.createElement("div");
-          fileBox.className = "p-4 rounded-2xl bg-brand-50 border border-brand-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3";
-          fileBox.innerHTML = `
-            <div>
-              <p class="text-xs font-bold text-brand-900">📎 Attached Faculty File</p>
-              <p class="text-xs text-brand-700">${escapeHtml(item.fileName)}</p>
-            </div>
-            <a href="${item.fileUrl}" target="_blank" rel="noopener noreferrer" download="${escapeHtml(item.fileName)}"
-              class="px-4 py-2 rounded-xl bg-brand-600 hover:bg-brand-700 text-white text-xs font-bold text-center transition">
-              Open / Download File
-            </a>
-          `;
-          body.appendChild(fileBox);
+        subjects.forEach(sub => {
+          if (typeof state.subjectMinutes[sub] !== "number") {
+            state.subjectMinutes[sub] = 0;
+          }
+        });
 
-          if (item.fileType && item.fileType.startsWith("image/")) {
-            const img = document.createElement("img");
-            img.src = item.fileUrl;
-            img.alt = item.title;
-            img.className = "w-full max-h-96 object-contain rounded-2xl border border-slate-200 bg-slate-50";
-            body.appendChild(img);
+        const cohortLabel = `${state.selectedLevel} • ${state.selectedCourse} • ${state.selectedBranch} (${state.selectedYear})`;
+        const existingIdx = state.checkedInStudents.findIndex(s => s.name === state.studentName);
+        if (existingIdx === -1) {
+          state.checkedInStudents.push({
+            name: state.studentName,
+            cohort: cohortLabel,
+            minutesToday: state.todayStudyMinutes,
+            testsCompleted: state.testsCompleted,
+            avgScore: state.testsCompleted > 0 ? Math.round(state.totalTestScorePercent / state.testsCompleted) : 0
+          });
+        } else {
+          state.checkedInStudents[existingIdx].cohort = cohortLabel;
+        }
+
+        savePersistentData();
+
+        const initials = state.studentName.split(" ").map(p => p[0]).join("").toUpperCase().slice(0, 2) || "S";
+        document.getElementById("topbar-avatar-initials").textContent = initials;
+        document.getElementById("topbar-student-name").textContent = state.studentName;
+        document.getElementById("header-cohort-sub").textContent = cohortLabel;
+        document.getElementById("dashboard-cohort-heading").textContent = cohortLabel;
+        document.getElementById("dept-room-label").textContent = `${state.selectedCourse} — ${state.selectedBranch}`;
+
+        const topTools = document.getElementById("student-topbar-tools");
+        topTools.classList.remove("hidden");
+        topTools.classList.add("flex");
+
+        document.getElementById("view-section-select").classList.add("hidden");
+        document.getElementById("view-teacher-portal").classList.add("hidden");
+        document.getElementById("view-student-dashboard").classList.remove("hidden");
+
+        renderSubjectTabs();
+        renderMaterialFilterPills();
+        renderMaterialsList();
+        renderLiveClassesList();
+        renderStudyTrackerUI();
+        switchDiscussionRoom(state.activeDiscussionRoom);
+        updatePlannerBadge();
+
+        if (!silent) {
+          showToast(`Welcome, ${state.studentName}! Your study workspace is ready.`, "success");
+        }
+      }
+
+      function completeSectionSelection() {
+        const nameInput = document.getElementById("student-name-input").value.trim();
+        state.studentName = nameInput || state.studentName || "Student";
+        state.hasJoinedSection = true;
+        openStudentWorkspaceView(false);
+      }
+
+      function goToSectionSelection() {
+        document.getElementById("view-student-dashboard").classList.add("hidden");
+        document.getElementById("view-teacher-portal").classList.add("hidden");
+        document.getElementById("view-section-select").classList.remove("hidden");
+        if (state.studentName) {
+          document.getElementById("student-name-input").value = state.studentName;
+        }
+        renderSectionWizard();
+      }
+
+      // =====================================================================
+      // VIEW 2: STUDENT PERSONAL PAGE
+      // =====================================================================
+      function switchStudentTab(tabName) {
+        state.activeStudentTab = tabName;
+
+        ["materials", "live", "tracker", "rooms"].forEach(t => {
+          const sec = document.getElementById(`student-section-${t}`);
+          const navBtn = document.getElementById(`bottom-nav-${t}`);
+          if (t === tabName) {
+            sec.classList.remove("hidden");
+            navBtn.className = "bottom-nav-btn flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 py-2 px-1 sm:px-3 rounded-2xl bg-brand-50 text-brand-700 font-extrabold transition";
+          } else {
+            sec.classList.add("hidden");
+            navBtn.className = "bottom-nav-btn flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 py-2 px-1 sm:px-3 rounded-2xl text-slate-600 hover:bg-slate-100 font-bold transition";
+          }
+        });
+
+        if (tabName === "materials") renderMaterialsList();
+        if (tabName === "live") renderLiveClassesList();
+        if (tabName === "tracker") renderStudyTrackerUI();
+        if (tabName === "rooms") renderDiscussionFeed();
+      }
+
+      function renderSubjectTabs() {
+        const subjects = ACADEMIC_DATA[state.selectedLevel].courses[state.selectedCourse].branches[state.selectedBranch] || [];
+        const container = document.getElementById("subject-room-tabs");
+        container.innerHTML = "";
+
+        subjects.forEach(sub => {
+          const active = state.activeSubject === sub;
+          const btn = document.createElement("button");
+          btn.type = "button";
+          btn.className = `px-3.5 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition ${
+            active ? "bg-slate-900 text-white shadow-xs" : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+          }`;
+          btn.textContent = sub;
+          btn.addEventListener("click", () => {
+            state.activeSubject = sub;
+            savePersistentData();
+            renderSubjectTabs();
+            renderMaterialsList();
+            renderLiveClassesList();
+            renderStudyTrackerUI();
+            renderDiscussionFeed();
+          });
+          container.appendChild(btn);
+        });
+
+        document.querySelectorAll(".active-subj-name").forEach(el => {
+          el.textContent = state.activeSubject;
+        });
+      }
+
+      function renderMaterialFilterPills() {
+        const container = document.getElementById("material-type-filters");
+        container.innerHTML = "";
+
+        MATERIAL_TYPES.forEach(type => {
+          const active = state.activeMaterialFilter === type;
+          const btn = document.createElement("button");
+          btn.type = "button";
+          btn.className = `px-3.5 py-1.5 rounded-full text-xs font-bold whitespace-nowrap border transition ${
+            active ? "bg-brand-600 text-white border-brand-600" : "bg-white text-slate-600 border-slate-200 hover:border-brand-300"
+          }`;
+          btn.textContent = type;
+          btn.addEventListener("click", () => {
+            state.activeMaterialFilter = type;
+            renderMaterialFilterPills();
+            renderMaterialsList();
+          });
+          container.appendChild(btn);
+        });
+      }
+
+      function renderMaterialsList() {
+        const container = document.getElementById("materials-container");
+        const matching = state.uploadedMaterials.filter(item => {
+          const sameCohort =
+            item.level === state.selectedLevel &&
+            item.course === state.selectedCourse &&
+            item.branch === state.selectedBranch &&
+            item.year === state.selectedYear &&
+            item.subject === state.activeSubject;
+          const sameType = state.activeMaterialFilter === "All" || item.type === state.activeMaterialFilter;
+          return sameCohort && sameType;
+        });
+
+        if (matching.length === 0) {
+          container.innerHTML = `
+            <div class="bg-white rounded-3xl border border-dashed border-slate-300 p-10 text-center">
+              <div class="w-14 h-14 rounded-2xl bg-slate-100 text-slate-500 flex items-center justify-center text-2xl mx-auto mb-3">📭</div>
+              <h3 class="font-extrabold text-slate-900 text-base">No Study Materials Uploaded Yet</h3>
+              <p class="text-xs sm:text-sm text-slate-500 max-w-md mx-auto mt-1">
+                Your subject teacher has not uploaded any <strong>${escapeHtml(state.activeMaterialFilter === 'All' ? 'Books, Notes, Formulas, PYQs, or Tests' : state.activeMaterialFilter)}</strong> for <strong>${escapeHtml(state.activeSubject)}</strong> yet.
+              </p>
+              <button type="button" id="empty-materials-teacher-btn" class="mt-4 px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold transition">
+                🔐 Teacher Login to Upload Materials
+              </button>
+            </div>
+          `;
+          document.getElementById("empty-materials-teacher-btn").addEventListener("click", openTeacherPinModal);
+          return;
+        }
+
+        const typeIcons = {
+          "Books": "📘",
+          "Notes": "📝",
+          "Formula": "📐",
+          "Short Notes": "⚡",
+          "Mindmaps": "🧠",
+          "PYQs": "📜",
+          "Model Paper": "📄",
+          "Tests": "✅"
+        };
+
+        const grid = document.createElement("div");
+        grid.className = "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4";
+
+        matching.forEach(item => {
+          const card = document.createElement("div");
+          card.className = "bg-white rounded-2xl border border-slate-200 p-5 flex flex-col justify-between hover:border-brand-300 transition shadow-xs";
+          card.innerHTML = `
+            <div>
+              <div class="flex items-center justify-between gap-2 mb-3">
+                <span class="px-2.5 py-1 rounded-lg bg-brand-50 text-brand-700 text-xs font-bold">
+                  ${typeIcons[item.type] || "📄"} ${escapeHtml(item.type)}
+                </span>
+                <span class="text-[11px] text-slate-400 font-medium">${escapeHtml(item.uploadedAt)}</span>
+              </div>
+              <h4 class="font-extrabold text-slate-900 text-sm sm:text-base leading-snug">${escapeHtml(item.title)}</h4>
+              <p class="text-xs text-slate-500 mt-1.5">By <strong class="text-slate-700">${escapeHtml(item.faculty)}</strong></p>
+              ${item.fileName ? `<p class="text-[11px] text-brand-600 font-semibold mt-1 truncate">📎 ${escapeHtml(item.fileName)}</p>` : ""}
+            </div>
+          `;
+
+          const openBtn = document.createElement("button");
+          openBtn.type = "button";
+          openBtn.className = `mt-5 w-full py-2.5 px-4 rounded-xl ${
+            item.type === "Tests" ? "bg-emerald-600 hover:bg-emerald-700" : "bg-slate-900 hover:bg-slate-800"
+          } text-white text-xs font-bold transition`;
+          openBtn.textContent = item.type === "Tests" ? `▶ Attempt MCQ Test (${item.questions.length} Qs)` : "📖 Open & Study";
+          openBtn.addEventListener("click", () => openMaterialViewer(item.id));
+
+          card.appendChild(openBtn);
+          grid.appendChild(card);
+        });
+
+        container.innerHTML = "";
+        container.appendChild(grid);
+      }
+
+      function openMaterialViewer(materialId) {
+        const item = state.uploadedMaterials.find(m => m.id === materialId);
+        if (!item) return;
+
+        document.getElementById("viewer-badge").textContent = `${item.subject} • ${item.type}`;
+        document.getElementById("viewer-title").textContent = item.title;
+        document.getElementById("viewer-meta").textContent = `Published by ${item.faculty} • ${item.uploadedAt}`;
+
+        const body = document.getElementById("viewer-body");
+        body.innerHTML = "";
+
+        if (item.type === "Tests" && item.questions && item.questions.length > 0) {
+          const answers = new Array(item.questions.length).fill(null);
+
+          item.questions.forEach((q, qIdx) => {
+            const qCard = document.createElement("div");
+            qCard.className = "p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-2.5";
+            qCard.innerHTML = `
+              <p class="text-xs font-bold uppercase text-brand-600">Question ${qIdx + 1} of ${item.questions.length}</p>
+              <p class="font-bold text-slate-900 text-sm sm:text-base">${escapeHtml(q.question)}</p>
+            `;
+
+            const optsWrap = document.createElement("div");
+            optsWrap.className = "space-y-2";
+
+            q.options.forEach((optText, optIdx) => {
+              const optBtn = document.createElement("button");
+              optBtn.type = "button";
+              optBtn.className = `q-opt-${qIdx} w-full text-left p-3 rounded-xl border-2 border-slate-200 bg-white hover:border-brand-500 font-semibold text-xs sm:text-sm transition`;
+              optBtn.textContent = `${String.fromCharCode(65 + optIdx)}. ${optText}`;
+              optBtn.addEventListener("click", () => {
+                answers[qIdx] = optIdx;
+                document.querySelectorAll(`.q-opt-${qIdx}`).forEach((b, i) => {
+                  b.className = `q-opt-${qIdx} w-full text-left p-3 rounded-xl border-2 font-semibold text-xs sm:text-sm transition ${
+                    i === optIdx ? "border-brand-600 bg-brand-50 text-brand-800" : "border-slate-200 bg-white text-slate-700"
+                  }`;
+                });
+              });
+              optsWrap.appendChild(optBtn);
+            });
+
+            qCard.appendChild(optsWrap);
+            body.appendChild(qCard);
+          });
+
+          const submitTestBtn = document.createElement("button");
+          submitTestBtn.type = "button";
+          submitTestBtn.className = "w-full py-3 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm transition";
+          submitTestBtn.textContent = "Submit Test & Record Score";
+
+          const resultBox = document.createElement("div");
+          resultBox.className = "hidden p-4 rounded-2xl text-xs sm:text-sm font-bold";
+
+          submitTestBtn.addEventListener("click", () => {
+            let correctCount = 0;
+            item.questions.forEach((q, idx) => {
+              if (answers[idx] === q.correctIndex) correctCount += 1;
+            });
+            const scorePct = Math.round((correctCount / item.questions.length) * 100);
+
+            state.testsCompleted += 1;
+            state.totalTestScorePercent += scorePct;
+            syncStudentAnalyticsRecord();
+            savePersistentData();
+            renderStudyTrackerUI();
+
+            submitTestBtn.disabled = true;
+            submitTestBtn.classList.add("opacity-50", "cursor-not-allowed");
+            resultBox.classList.remove("hidden");
+            resultBox.className = "p-4 rounded-2xl text-xs sm:text-sm font-bold bg-emerald-100 text-emerald-900 border border-emerald-300";
+            resultBox.textContent = `✅ Test Submitted! You scored ${correctCount}/${item.questions.length} (${scorePct}%). Updated in Your Study Tracker.`;
+            showToast(`Test score (${scorePct}%) saved to Your Study Tracker!`, "success");
+          });
+
+          body.append(submitTestBtn, resultBox);
+        } else {
+          if (item.content) {
+            const textDiv = document.createElement("div");
+            textDiv.className = "whitespace-pre-wrap bg-slate-50 p-5 rounded-2xl border border-slate-200 text-slate-800 text-sm leading-relaxed";
+            textDiv.textContent = item.content;
+            body.appendChild(textDiv);
+          }
+
+          if (item.fileUrl) {
+            const fileBox = document.createElement("div");
+            fileBox.className = "p-4 rounded-2xl bg-brand-50 border border-brand-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3";
+            fileBox.innerHTML = `
+              <div>
+                <p class="text-xs font-bold text-brand-900">📎 Attached Faculty File</p>
+                <p class="text-xs text-brand-700">${escapeHtml(item.fileName)}</p>
+              </div>
+              <a href="${item.fileUrl}" download="${escapeHtml(item.fileName)}"
+                class="px-4 py-2 rounded-xl bg-brand-600 hover:bg-brand-700 text-white text-xs font-bold text-center transition">
+                Download File
+              </a>
+            `;
+            body.appendChild(fileBox);
+
+            if (item.fileType && item.fileType.startsWith("image/")) {
+              const img = document.createElement("img");
+              img.src = item.fileUrl;
+              img.alt = item.title;
+              img.className = "w-full max-h-96 object-contain rounded-2xl border border-slate-200 bg-slate-50";
+              body.appendChild(img);
+            }
+          }
+
+          if (!item.content && !item.fileUrl) {
+            body.innerHTML = `<p class="text-slate-500 text-sm">No additional notes attached.</p>`;
           }
         }
 
-        if (!item.content && !item.fileUrl) {
-          body.innerHTML = `<p class="text-slate-500 text-sm">No additional notes attached.</p>`;
+        document.getElementById("modal-material-viewer").classList.remove("hidden");
+      }
+
+      function closeMaterialViewer() {
+        document.getElementById("modal-material-viewer").classList.add("hidden");
+      }
+
+      // =====================================================================
+      // LIVE CLASSES
+      // =====================================================================
+      function renderLiveClassesList() {
+        const container = document.getElementById("live-classes-container");
+        const badge = document.getElementById("live-class-count-badge");
+
+        const matching = state.liveClasses.filter(lc =>
+          lc.level === state.selectedLevel &&
+          lc.course === state.selectedCourse &&
+          lc.branch === state.selectedBranch &&
+          lc.year === state.selectedYear &&
+          lc.subject === state.activeSubject
+        );
+
+        badge.textContent = `${matching.length} Live ${matching.length === 1 ? "Class" : "Classes"}`;
+
+        if (matching.length === 0) {
+          container.innerHTML = `
+            <div class="bg-white rounded-3xl border border-dashed border-slate-300 p-10 text-center">
+              <div class="w-14 h-14 rounded-2xl bg-rose-50 text-rose-500 flex items-center justify-center text-2xl mx-auto mb-3">🎥</div>
+              <h3 class="font-extrabold text-slate-900 text-base">No Live Classes Scheduled Right Now</h3>
+              <p class="text-xs sm:text-sm text-slate-500 max-w-md mx-auto mt-1">
+                When your <strong>${escapeHtml(state.activeSubject)}</strong> teacher starts a live lecture, it will appear right here.
+              </p>
+            </div>
+          `;
+          return;
         }
-      }
 
-      document.getElementById("modal-material-viewer").classList.remove("hidden");
-    }
+        const grid = document.createElement("div");
+        grid.className = "grid grid-cols-1 md:grid-cols-2 gap-4";
 
-    function closeMaterialViewer() {
-      document.getElementById("modal-material-viewer").classList.add("hidden");
-    }
-
-    // =====================================================================
-    // LIVE CLASSES
-    // =====================================================================
-    function renderLiveClassesList() {
-      const container = document.getElementById("live-classes-container");
-      const badge = document.getElementById("live-class-count-badge");
-
-      const matching = state.liveClasses.filter(lc =>
-        lc.level === state.selectedLevel &&
-        lc.course === state.selectedCourse &&
-        lc.branch === state.selectedBranch &&
-        lc.year === state.selectedYear &&
-        lc.subject === state.activeSubject
-      );
-
-      badge.textContent = `${matching.length} Live ${matching.length === 1 ? "Class" : "Classes"}`;
-
-      if (matching.length === 0) {
-        container.innerHTML = `
-          <div class="bg-white rounded-3xl border border-dashed border-slate-300 p-10 text-center">
-            <div class="w-14 h-14 rounded-2xl bg-rose-50 text-rose-500 flex items-center justify-center text-2xl mx-auto mb-3">🎥</div>
-            <h3 class="font-extrabold text-slate-900 text-base">No Live Classes Scheduled Right Now</h3>
-            <p class="text-xs sm:text-sm text-slate-500 max-w-md mx-auto mt-1">
-              When your <strong>${escapeHtml(state.activeSubject)}</strong> teacher starts a live lecture, it will appear right here.
-            </p>
-          </div>
-        `;
-        return;
-      }
-
-      const grid = document.createElement("div");
-      grid.className = "grid grid-cols-1 md:grid-cols-2 gap-4";
-
-      matching.forEach(lc => {
-        const card = document.createElement("div");
-        card.className = "bg-white rounded-2xl border border-rose-200 p-5 shadow-xs flex flex-col justify-between";
-        card.innerHTML = `
-          <div>
-            <div class="flex items-center justify-between mb-2">
-              <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-rose-100 text-rose-700 text-[11px] font-extrabold">
-                <span class="w-2 h-2 rounded-full bg-rose-600 animate-ping"></span> LIVE NOW
-              </span>
-              <span class="text-xs text-slate-400">${escapeHtml(lc.startedAt)}</span>
+        matching.forEach(lc => {
+          const card = document.createElement("div");
+          card.className = "bg-white rounded-2xl border border-rose-200 p-5 shadow-xs flex flex-col justify-between";
+          card.innerHTML = `
+            <div>
+              <div class="flex items-center justify-between mb-2">
+                <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-rose-100 text-rose-700 text-[11px] font-extrabold">
+                  <span class="w-2 h-2 rounded-full bg-rose-600 animate-ping"></span> LIVE NOW
+                </span>
+                <span class="text-xs text-slate-400">${escapeHtml(lc.startedAt)}</span>
+              </div>
+              <h4 class="font-extrabold text-slate-900 text-base">${escapeHtml(lc.topic)}</h4>
+              <p class="text-xs text-slate-500 mt-1">Faculty: <strong class="text-slate-700">${escapeHtml(lc.teacher)}</strong></p>
             </div>
-            <h4 class="font-extrabold text-slate-900 text-base">${escapeHtml(lc.topic)}</h4>
-            <p class="text-xs text-slate-500 mt-1">Faculty: <strong class="text-slate-700">${escapeHtml(lc.teacher)}</strong></p>
-          </div>
-        `;
+          `;
 
-        const joinBtn = document.createElement("button");
-        joinBtn.type = "button";
-        joinBtn.className = "mt-4 w-full py-2.5 px-4 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold transition";
-        joinBtn.textContent = "▶ Join Live Class & Start Study Timer";
-        joinBtn.addEventListener("click", () => openLiveClassroomModal(lc));
+          const joinBtn = document.createElement("button");
+          joinBtn.type = "button";
+          joinBtn.className = "mt-4 w-full py-2.5 px-4 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold transition";
+          joinBtn.textContent = "▶ Join Live Class & Start Study Timer";
+          joinBtn.addEventListener("click", () => openLiveClassroomModal(lc));
 
-        card.appendChild(joinBtn);
-        grid.appendChild(card);
-      });
+          card.appendChild(joinBtn);
+          grid.appendChild(card);
+        });
 
-      container.innerHTML = "";
-      container.appendChild(grid);
-    }
-
-    function openLiveClassroomModal(lc) {
-      if (!state.timerRunning) {
-        toggleStudyTimer();
+        container.innerHTML = "";
+        container.appendChild(grid);
       }
 
-      document.getElementById("viewer-badge").textContent = `🔴 LIVE LECTURE • ${lc.subject}`;
-      document.getElementById("viewer-title").textContent = lc.topic;
-      document.getElementById("viewer-meta").textContent = `Host: ${lc.teacher} • Study Stopwatch Running`;
+      function openLiveClassroomModal(lc) {
+        if (!state.timerRunning) {
+          toggleStudyTimer();
+        }
 
-      const body = document.getElementById("viewer-body");
-      body.innerHTML = `
-        <div class="rounded-2xl bg-slate-900 text-white p-6 text-center space-y-3">
-          <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-rose-600/20 border border-rose-500/40 text-rose-300 text-xs font-bold">
-            <span class="w-2 h-2 rounded-full bg-rose-500 animate-ping"></span> Connected to Live Classroom
-          </div>
-          <h4 class="text-lg sm:text-xl font-extrabold">${escapeHtml(lc.topic)}</h4>
-          <p class="text-xs text-slate-300">Instructor: <strong>${escapeHtml(lc.teacher)}</strong> • ${escapeHtml(lc.subject)}</p>
-          <div class="my-4 py-8 px-4 rounded-xl bg-slate-800/90 border border-slate-700">
-            <p class="text-sm font-semibold text-indigo-300">📡 Live Lecture Stream & Interactive Board Active</p>
-            <p class="text-xs text-slate-400 mt-1">Your study stopwatch in the top-right corner is automatically recording your attendance time.</p>
-          </div>
-          <div class="flex items-center justify-center gap-3 pt-2">
-            <button type="button" id="live-raise-hand-btn" class="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-extrabold transition">
-              ✋ Raise Hand for Doubt
-            </button>
-          </div>
-        </div>
-      `;
+        document.getElementById("viewer-badge").textContent = `🔴 LIVE LECTURE • ${lc.subject}`;
+        document.getElementById("viewer-title").textContent = lc.topic;
+        document.getElementById("viewer-meta").textContent = `Host: ${lc.teacher} • Study Stopwatch Running`;
 
-      document.getElementById("live-raise-hand-btn").addEventListener("click", () => {
-        showToast(`Hand raised! ${lc.teacher} has been notified of your doubt.`, "info");
-      });
-
-      document.getElementById("modal-material-viewer").classList.remove("hidden");
-      showToast(`Joined "${lc.topic}"! Stopwatch started automatically.`, "success");
-    }
-
-    // =====================================================================
-    // STUDY STOPWATCH & TRACKER (STARTS AT ALL ZEROS)
-    // =====================================================================
-    function formatHMS(totalSeconds) {
-      const hrs = String(Math.floor(totalSeconds / 3600)).padStart(2, "0");
-      const mins = String(Math.floor((totalSeconds % 3600) / 60)).padStart(2, "0");
-      const secs = String(totalSeconds % 60).padStart(2, "0");
-      return `${hrs}:${mins}:${secs}`;
-    }
-
-    function updateStopwatchDisplays() {
-      const formatted = formatHMS(state.timerSeconds);
-      document.getElementById("topbar-stopwatch-display").textContent = formatted;
-      document.getElementById("tracker-stopwatch-display").textContent = formatted;
-
-      const topToggle = document.getElementById("topbar-stopwatch-toggle");
-      const trackerToggle = document.getElementById("tracker-toggle-btn");
-      const statusText = document.getElementById("tracker-stopwatch-status");
-
-      if (state.timerRunning) {
-        topToggle.textContent = "⏸";
-        trackerToggle.textContent = "⏸ Pause Clock";
-        statusText.textContent = `Counting live for ${state.activeSubject}...`;
-      } else {
-        topToggle.textContent = "▶";
-        trackerToggle.textContent = "▶ Start Clock";
-        statusText.textContent = state.timerSeconds > 0 ? `Paused at ${formatted}` : "Not started yet (0s)";
-      }
-    }
-
-    function toggleStudyTimer() {
-      if (state.timerRunning) {
-        clearInterval(state.timerInterval);
-        state.timerRunning = false;
-      } else {
-        state.timerRunning = true;
-        state.timerInterval = setInterval(() => {
-          state.timerSeconds += 1;
-          updateStopwatchDisplays();
-        }, 1000);
-      }
-      updateStopwatchDisplays();
-    }
-
-    function logStudySession() {
-      if (state.timerSeconds <= 0) {
-        showToast("Start the stopwatch first before saving study time.", "info");
-        return;
-      }
-
-      if (state.timerRunning) {
-        clearInterval(state.timerInterval);
-        state.timerRunning = false;
-      }
-
-      const minsEarned = Math.max(1, Math.round(state.timerSeconds / 60));
-      state.timerSeconds = 0;
-      addStudyMinutesToSubject(state.activeSubject, minsEarned);
-      updateStopwatchDisplays();
-    }
-
-    function handleManualStudyLog(e) {
-      e.preventDefault();
-      const input = document.getElementById("manual-mins-input");
-      const mins = parseInt(input.value, 10);
-      if (!mins || mins <= 0) return;
-
-      input.value = "";
-      addStudyMinutesToSubject(state.activeSubject, mins);
-    }
-
-    function addStudyMinutesToSubject(subject, mins) {
-      state.todayStudyMinutes += mins;
-      state.subjectMinutes[subject] = (state.subjectMinutes[subject] || 0) + mins;
-      if (state.todayStudyMinutes > 0 && state.streakDays === 0) {
-        state.streakDays = 1;
-      }
-
-      syncStudentAnalyticsRecord();
-      renderStudyTrackerUI();
-      showToast(`Saved ${mins} min(s) to ${subject}!`, "success");
-    }
-
-    function syncStudentAnalyticsRecord() {
-      const avgScore = state.testsCompleted > 0 ? Math.round(state.totalTestScorePercent / state.testsCompleted) : 0;
-      const idx = state.checkedInStudents.findIndex(s => s.name === state.studentName);
-      if (idx !== -1) {
-        state.checkedInStudents[idx].minutesToday = state.todayStudyMinutes;
-        state.checkedInStudents[idx].testsCompleted = state.testsCompleted;
-        state.checkedInStudents[idx].avgScore = avgScore;
-      }
-    }
-
-    function renderStudyTrackerUI() {
-      document.getElementById("mini-today-mins").textContent = `${state.todayStudyMinutes} mins`;
-      document.getElementById("stat-today-minutes").textContent = `${state.todayStudyMinutes} mins`;
-      document.getElementById("stat-tests-done").textContent = `${state.testsCompleted}`;
-
-      const avgScore = state.testsCompleted > 0 ? Math.round(state.totalTestScorePercent / state.testsCompleted) : 0;
-      document.getElementById("stat-avg-score").textContent = `Avg Score: ${avgScore}%`;
-      document.getElementById("stat-streak-days").textContent = `${state.streakDays} ${state.streakDays === 1 ? "Day" : "Days"}`;
-
-      const doneTasks = state.plannerTasks.filter(t => t.done).length;
-      document.getElementById("stat-planner-done").textContent = `${doneTasks} / ${state.plannerTasks.length}`;
-
-      const goalPercent = Math.min(100, Math.round((state.todayStudyMinutes / 240) * 100));
-      document.getElementById("daily-goal-heading").textContent = `Daily Target Progress (${state.todayStudyMinutes} / 240 mins)`;
-      document.getElementById("daily-goal-percent").textContent = `${goalPercent}%`;
-      document.getElementById("daily-goal-bar").style.width = `${goalPercent}%`;
-
-      const subjects = state.hasJoinedSection
-        ? ACADEMIC_DATA[state.selectedLevel].courses[state.selectedCourse].branches[state.selectedBranch]
-        : [];
-      const breakdownEl = document.getElementById("subject-study-breakdown");
-      breakdownEl.innerHTML = subjects.map(sub => {
-        const mins = state.subjectMinutes[sub] || 0;
-        const pct = state.todayStudyMinutes > 0 ? Math.round((mins / state.todayStudyMinutes) * 100) : 0;
-        return `
-          <div>
-            <div class="flex items-center justify-between text-xs font-bold mb-1">
-              <span class="text-slate-700">${escapeHtml(sub)}</span>
-              <span class="font-mono text-slate-500">${mins} mins (${pct}%)</span>
+        const body = document.getElementById("viewer-body");
+        body.innerHTML = `
+          <div class="rounded-2xl bg-slate-900 text-white p-6 text-center space-y-3">
+            <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-rose-600/20 border border-rose-500/40 text-rose-300 text-xs font-bold">
+              <span class="w-2 h-2 rounded-full bg-rose-500 animate-ping"></span> Connected to Live Classroom
             </div>
-            <div class="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
-              <div class="h-full bg-brand-600 rounded-full transition-all duration-300" style="width: ${pct}%"></div>
+            <h4 class="text-lg sm:text-xl font-extrabold">${escapeHtml(lc.topic)}</h4>
+            <p class="text-xs text-slate-300">Instructor: <strong>${escapeHtml(lc.teacher)}</strong> • ${escapeHtml(lc.subject)}</p>
+            <div class="my-4 py-8 px-4 rounded-xl bg-slate-800/90 border border-slate-700">
+              <p class="text-sm font-semibold text-indigo-300">📡 Live Lecture Stream & Interactive Board Active</p>
+              <p class="text-xs text-slate-400 mt-1">Your study stopwatch in the top-right corner is automatically recording your attendance time.</p>
+            </div>
+            <div class="flex items-center justify-center gap-3 pt-2">
+              <button type="button" id="live-raise-hand-btn" class="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-extrabold transition">
+                ✋ Raise Hand for Doubt
+              </button>
             </div>
           </div>
         `;
-      }).join("");
-    }
 
-    // =====================================================================
-    // THREE DISCUSSION ROOMS
-    // =====================================================================
-    function switchDiscussionRoom(roomKey) {
-      state.activeDiscussionRoom = roomKey;
+        document.getElementById("live-raise-hand-btn").addEventListener("click", () => {
+          showToast(`Hand raised! ${lc.teacher} has been notified of your doubt.`, "info");
+        });
 
-      const styles = {
-        students_only: {
-          card: "border-emerald-500 bg-emerald-50/70",
-          headerBg: "bg-emerald-900",
-          icon: "🔒",
-          title: `1. Students-Only Room (${state.activeSubject})`,
-          subtitle: "Private Peer Discussion • Faculty Strictly Blocked",
-          badge: "Section Peers Only"
-        },
-        teacher_student: {
-          card: "border-brand-500 bg-brand-50/70",
-          headerBg: "bg-brand-900",
-          icon: "🎓",
-          title: `2. Teacher-Student Room (${state.activeSubject})`,
-          subtitle: "Official Classroom Doubt Forum • Students + Faculty",
-          badge: "Verified Faculty Allowed"
-        },
-        all_department: {
-          card: "border-violet-500 bg-violet-50/70",
-          headerBg: "bg-violet-900",
-          icon: "🏛️",
-          title: "3. All Department All Students Room",
-          subtitle: `Cross-Year Community • ${state.selectedCourse} (${state.selectedBranch})`,
-          badge: "All Years Department"
-        }
-      };
-
-      ["students_only", "teacher_student", "all_department"].forEach(key => {
-        const card = document.getElementById(`room-card-${key}`);
-        if (key === roomKey) {
-          card.className = `room-switch-card text-left p-4 rounded-2xl border-2 ${styles[key].card} transition flex items-start gap-3`;
-        } else {
-          card.className = "room-switch-card text-left p-4 rounded-2xl border-2 border-slate-200 bg-white hover:border-slate-300 transition flex items-start gap-3";
-        }
-      });
-
-      const cfg = styles[roomKey];
-      document.getElementById("chat-room-header").className = `px-5 py-3.5 ${cfg.headerBg} text-white flex items-center justify-between gap-2`;
-      document.getElementById("chat-header-icon").textContent = cfg.icon;
-      document.getElementById("chat-header-title").textContent = cfg.title;
-      document.getElementById("chat-header-subtitle").textContent = cfg.subtitle;
-      document.getElementById("chat-room-scope-badge").textContent = cfg.badge;
-
-      renderDiscussionFeed();
-    }
-
-    function getCurrentRoomMessageList() {
-      if (state.activeDiscussionRoom === "all_department") {
-        const deptKey = getActiveDepartmentRoomKey();
-        if (!state.messages.all_department[deptKey]) state.messages.all_department[deptKey] = [];
-        return state.messages.all_department[deptKey];
-      }
-      const subjKey = getActiveSubjectRoomKey();
-      if (!state.messages[state.activeDiscussionRoom][subjKey]) {
-        state.messages[state.activeDiscussionRoom][subjKey] = [];
-      }
-      return state.messages[state.activeDiscussionRoom][subjKey];
-    }
-
-    function renderDiscussionFeed() {
-      // Keep header title synced with active subject
-      if (state.activeDiscussionRoom === "students_only") {
-        document.getElementById("chat-header-title").textContent = `1. Students-Only Room (${state.activeSubject})`;
-      } else if (state.activeDiscussionRoom === "teacher_student") {
-        document.getElementById("chat-header-title").textContent = `2. Teacher-Student Room (${state.activeSubject})`;
+        document.getElementById("modal-material-viewer").classList.remove("hidden");
+        showToast(`Joined "${lc.topic}"! Stopwatch started automatically.`, "success");
       }
 
-      const feed = document.getElementById("chat-messages-feed");
-      const msgs = getCurrentRoomMessageList();
+      // =====================================================================
+      // STUDY STOPWATCH & TRACKER (STARTS AT ALL ZEROS)
+      // =====================================================================
+      function formatHMS(totalSeconds) {
+        const hrs = String(Math.floor(totalSeconds / 3600)).padStart(2, "0");
+        const mins = String(Math.floor((totalSeconds % 3600) / 60)).padStart(2, "0");
+        const secs = String(totalSeconds % 60).padStart(2, "0");
+        return `${hrs}:${mins}:${secs}`;
+      }
 
-      if (msgs.length === 0) {
-        feed.innerHTML = `
-          <div class="h-full flex flex-col items-center justify-center text-center text-slate-400 py-10">
-            <p class="text-2xl mb-2">💬</p>
-            <html>
+      function updateStopwatchDisplays() {
+        const formatted = formatHMS(state.timerSeconds);
+        document.getElementById("topbar-stopwatch-display").textContent = formatted;
+        document.getElementById("tracker-stopwatch-display").textContent = formatted;
+
+        const topToggle = document.getElementById("topbar-stopwatch-toggle");
+        const trackerToggle = document.getElementById("tracker-toggle-btn");
+        const statusText = document.getElementById("tracker-stopwatch-status");
+
+        if (state.timerRunning) {
+          topToggle.textContent = "⏸";
+          trackerToggle.textCon
