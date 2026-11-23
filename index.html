@@ -5,1837 +5,1110 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>EduPulse — Online Study & Daily Cohort Tracker</title>
-  <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
-  <!-- Google Fonts: Inter & JetBrains Mono -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@600;700&display=swap" rel="stylesheet">
   <script>
     if (window.tailwind) {
       window.tailwind.config = {
         theme: {
           extend: {
-            fontFamily: {
-              sans: ['Inter', 'sans-serif'],
-              mono: ['JetBrains Mono', 'monospace'],
-            },
-            colors: {
-              brand: {
-                50: '#eef2ff',
-                100: '#e0e7ff',
-                500: '#6366f1',
-                600: '#4f46e5',
-                700: '#4338ca',
-                900: '#312e81',
-              }
-            }
+            fontFamily: { sans: ['Inter', 'sans-serif'], mono: ['JetBrains Mono', 'monospace'] },
+            colors: { brand: { 50: '#eef2ff', 100: '#e0e7ff', 500: '#6366f1', 600: '#4f46e5', 700: '#4338ca', 900: '#312e81' } }
           }
         }
       };
     }
   </script>
-  <style>
-    ::-webkit-scrollbar { width: 6px; height: 6px; }
-    ::-webkit-scrollbar-track { background: #f1f5f9; }
-    ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 9999px; }
-    ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
-  </style>
 </head>
-<body class="bg-slate-50 text-slate-800 font-sans antialiased min-h-screen flex flex-col selection:bg-brand-100 selection:text-brand-900">
+<body class="bg-slate-50 text-slate-800 font-sans antialiased min-h-screen flex flex-col">
 
-  <!-- Toast Notification Container -->
-  <div id="toast-container" class="fixed top-20 right-4 z-50 flex flex-col gap-2 max-w-sm w-full pointer-events-none px-4 sm:px-0"></div>
+  <!-- Toast Container -->
+  <div id="toast-box" class="fixed top-20 right-4 z-50 flex flex-col gap-2 max-w-sm w-full pointer-events-none px-4 sm:px-0"></div>
 
-  <!-- ===================================================================== -->
-  <!-- TOP NAVIGATION HEADER                                                 -->
-  <!-- ===================================================================== -->
+  <!-- TOP HEADER: Brand Left | [Stopwatch] [Daily Planner] [Profile] [Teacher PIN] Right -->
   <header class="bg-white border-b border-slate-200 sticky top-0 z-30">
-    <div class="max-w-7xl mx-auto px-2.5 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-2">
-
-      <!-- Left: Brand Logo & Active Section Summary -->
+    <div class="max-w-7xl mx-auto px-2.5 sm:px-6 h-16 flex items-center justify-between gap-2">
       <div class="flex items-center gap-2 min-w-0">
-        <button type="button" id="brand-home-btn" class="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-br from-brand-600 to-violet-600 flex items-center justify-center text-white shadow-xs shrink-0">
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-          </svg>
-        </button>
+        <button type="button" id="btn-home" class="w-9 h-9 rounded-xl bg-brand-600 text-white font-extrabold flex items-center justify-center shrink-0">E</button>
         <div class="min-w-0">
-          <span class="font-extrabold text-sm sm:text-lg tracking-tight text-slate-900 block leading-none">Edu<span class="text-brand-600">Pulse</span></span>
-          <p id="header-cohort-sub" class="text-[11px] text-slate-500 truncate mt-0.5 hidden md:block">Select your Class, Branch & Year</p>
+          <span class="font-extrabold text-sm sm:text-lg text-slate-900 block leading-none">Edu<span class="text-brand-600">Pulse</span></span>
+          <p id="hdr-sub" class="text-[11px] text-slate-500 truncate mt-0.5 hidden md:block">Select Class, Stream/Branch & Year</p>
         </div>
       </div>
 
-      <!-- Top-Right Corner Cluster:
-           [Study Stopwatch Clock] -> [Daily Planner] -> [Profile] + [Teacher PIN] -->
       <div class="flex items-center gap-1.5 sm:gap-2 shrink-0">
-
-        <!-- Student Top-Right Tools (Shown once student enters their section page) -->
-        <div id="student-topbar-tools" class="hidden items-center gap-1.5 sm:gap-2">
-
-          <!-- 1. Study Stopwatch Clock -->
-          <div class="flex items-center gap-1 sm:gap-1.5 bg-slate-900 text-white px-2 sm:px-3 py-1.5 rounded-xl border border-slate-800 shadow-xs">
-            <span class="text-amber-400 text-xs" title="Study Stopwatch">⏱️</span>
-            <span id="topbar-stopwatch-display" class="font-mono text-[11px] sm:text-xs font-bold tracking-wider">00:00:00</span>
-            <button type="button" id="topbar-stopwatch-toggle" title="Start / Pause Stopwatch"
-              class="w-6 h-6 rounded-lg bg-brand-600 hover:bg-brand-500 text-white flex items-center justify-center text-[10px] font-bold transition">
-              ▶
-            </button>
-            <button type="button" id="topbar-stopwatch-save" title="Save Stopwatch Time to Tracker"
-              class="w-6 h-6 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white flex items-center justify-center text-[10px] font-bold transition">
-              ✓
-            </button>
+        <!-- Student Top-Right Tools -->
+        <div id="topbar-tools" class="hidden items-center gap-1.5 sm:gap-2">
+          <!-- Study Stopwatch Clock -->
+          <div class="flex items-center gap-1 bg-slate-900 text-white px-2 sm:px-2.5 py-1.5 rounded-xl">
+            <span class="text-xs">⏱️</span>
+            <span id="top-clock" class="font-mono text-[11px] sm:text-xs font-bold">00:00:00</span>
+            <button type="button" id="top-clock-toggle" class="w-6 h-6 rounded-lg bg-brand-600 hover:bg-brand-500 text-[10px] font-bold">▶</button>
+            <button type="button" id="top-clock-save" class="w-6 h-6 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-[10px] font-bold" title="Save to Tracker">✓</button>
           </div>
-
-          <!-- 2. Daily Planner (Right beside Stopwatch) -->
-          <button type="button" id="topbar-planner-btn" title="Open Daily Planner"
-            class="flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1.5 rounded-xl bg-amber-50 hover:bg-amber-100 border border-amber-200 text-amber-900 text-xs font-bold transition">
+          <!-- Daily Planner beside Stopwatch -->
+          <button type="button" id="btn-planner" class="flex items-center gap-1 px-2 sm:px-2.5 py-1.5 rounded-xl bg-amber-50 hover:bg-amber-100 border border-amber-200 text-amber-900 text-xs font-bold">
             <span>📅</span>
-            <span class="hidden lg:inline">Daily Planner</span>
-            <span id="planner-badge-count" class="px-1.5 py-0.5 rounded-full bg-amber-200 text-amber-950 text-[10px] font-extrabold">0</span>
+            <span class="hidden lg:inline">Planner</span>
+            <span id="planner-count" class="px-1.5 py-0.5 rounded-full bg-amber-200 text-[10px] font-extrabold">0</span>
           </button>
-
-          <!-- 3. Student Profile (Top Right Corner) -->
-          <button type="button" id="topbar-profile-btn" title="Student Profile"
-            class="flex items-center gap-1.5 pl-1 pr-2 py-1 rounded-full bg-slate-100 hover:bg-slate-200 border border-slate-200 transition">
-            <div id="topbar-avatar-initials" class="w-7 h-7 rounded-full bg-brand-600 text-white flex items-center justify-center text-xs font-extrabold">
-              S
-            </div>
-            <span id="topbar-student-name" class="text-xs font-bold text-slate-800 max-w-[70px] sm:max-w-[100px] truncate hidden sm:inline">Student</span>
+          <!-- Profile in Top-Right Corner -->
+          <button type="button" id="btn-profile" class="flex items-center gap-1.5 pl-1 pr-2 py-1 rounded-full bg-slate-100 hover:bg-slate-200 border border-slate-200">
+            <span id="top-avatar" class="w-7 h-7 rounded-full bg-brand-600 text-white flex items-center justify-center text-xs font-extrabold">S</span>
+            <span id="top-name" class="text-xs font-bold text-slate-800 max-w-[75px] truncate hidden sm:inline">Student</span>
           </button>
         </div>
 
-        <!-- Teacher PIN Portal Button -->
-        <button type="button" id="open-teacher-modal-btn"
-          class="flex items-center gap-1 px-2.5 sm:px-3 py-2 rounded-xl text-[11px] sm:text-xs font-bold bg-slate-900 text-white hover:bg-slate-800 transition shadow-xs">
-          <span>🔐</span>
-          <span class="hidden sm:inline">Teacher PIN</span>
+        <button type="button" id="btn-teacher-modal" class="flex items-center gap-1 px-2.5 py-2 rounded-xl text-[11px] sm:text-xs font-bold bg-slate-900 text-white hover:bg-slate-800">
+          <span>🔐</span><span class="hidden sm:inline">Teacher PIN</span>
         </button>
       </div>
     </div>
   </header>
 
-  <!-- ===================================================================== -->
-  <!-- VIEW 1: SECTION & ACADEMIC COHORT SELECTOR                            -->
-  <!-- ===================================================================== -->
-  <main id="view-section-select" class="flex-1 max-w-3xl w-full mx-auto px-4 sm:px-6 py-6 sm:py-10">
+  <!-- VIEW 1: SECTION & ACADEMIC SELECTOR -->
+  <main id="view-wizard" class="flex-1 max-w-3xl w-full mx-auto px-4 py-6 sm:py-10">
     <div class="bg-white rounded-3xl border border-slate-200 p-6 sm:p-8 shadow-xs">
-      <div class="flex items-center justify-between gap-3 mb-6">
+      <div class="flex items-center justify-between gap-2 mb-5">
         <div>
           <h1 class="text-xl sm:text-2xl font-extrabold text-slate-900">Which Section Are You From?</h1>
-          <p class="text-xs sm:text-sm text-slate-500 mt-1">Choose your Class/College, Stream/Course, Branch, and Year to enter your study workspace.</p>
+          <p class="text-xs sm:text-sm text-slate-500 mt-1">Select Class/College, Stream/Course, Branch & Year to open your workspace.</p>
         </div>
-        <span id="wizard-step-badge" class="px-3 py-1 rounded-full bg-brand-50 text-brand-700 text-xs font-bold shrink-0">Step 1 of 4</span>
+        <span id="wiz-badge" class="px-3 py-1 rounded-full bg-brand-50 text-brand-700 text-xs font-bold shrink-0">Step 1/4</span>
       </div>
 
-      <!-- Student Name -->
       <div class="mb-5">
-        <label for="student-name-input" class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Your Full Name</label>
-        <input id="student-name-input" type="text" placeholder="Enter your name (e.g., Aarav Sharma)"
-          class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 outline-none text-sm font-medium transition" />
+        <label for="inp-student-name" class="block text-xs font-bold uppercase text-slate-500 mb-1.5">Your Name</label>
+        <input id="inp-student-name" type="text" placeholder="Enter your full name" class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-brand-500 outline-none text-sm font-medium" />
       </div>
 
-      <!-- STEP 1: Class 9th, 10th, 11th, 12th, or College -->
       <div class="mb-5">
-        <label class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">1. Select Class or College</label>
-        <div id="level-options" class="grid grid-cols-2 sm:grid-cols-5 gap-2.5"></div>
+        <label class="block text-xs font-bold uppercase text-slate-500 mb-2">1. Select Class or College</label>
+        <div id="wiz-levels" class="grid grid-cols-2 sm:grid-cols-5 gap-2"></div>
       </div>
 
-      <!-- STEP 2: Stream (11th/12th) or Degree (College) -->
-      <div id="step-2-container" class="mb-5 hidden">
-        <label id="step-2-label" class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">2. Select Stream / Course</label>
-        <div id="course-options" class="grid grid-cols-2 sm:grid-cols-3 gap-2.5"></div>
+      <div id="wiz-step2" class="mb-5 hidden">
+        <label id="wiz-step2-lbl" class="block text-xs font-bold uppercase text-slate-500 mb-2">2. Select Stream / Course</label>
+        <div id="wiz-courses" class="grid grid-cols-2 sm:grid-cols-3 gap-2"></div>
       </div>
 
-      <!-- STEP 3: Branch / Department / Section -->
-      <div id="step-3-container" class="mb-5 hidden">
-        <label id="step-3-label" class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">3. Select Branch / Department / Section</label>
-        <div id="branch-options" class="grid grid-cols-1 sm:grid-cols-2 gap-2.5"></div>
+      <div id="wiz-step3" class="mb-5 hidden">
+        <label id="wiz-step3-lbl" class="block text-xs font-bold uppercase text-slate-500 mb-2">3. Select Branch / Department / Section</label>
+        <div id="wiz-branches" class="grid grid-cols-1 sm:grid-cols-2 gap-2"></div>
       </div>
 
-      <!-- STEP 4: Year -->
-      <div id="step-4-container" class="mb-5 hidden">
-        <label class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">4. Which Year Are You In?</label>
-        <div id="year-options" class="grid grid-cols-2 sm:grid-cols-4 gap-2.5"></div>
+      <div id="wiz-step4" class="mb-5 hidden">
+        <label class="block text-xs font-bold uppercase text-slate-500 mb-2">4. Which Year Are You In?</label>
+        <div id="wiz-years" class="grid grid-cols-2 sm:grid-cols-4 gap-2"></div>
       </div>
 
-      <!-- Subject Preview -->
-      <div id="subject-preview-box" class="hidden p-4 rounded-2xl bg-slate-50 border border-slate-200 mb-6">
-        <p class="text-xs font-bold text-slate-600 mb-2">📚 Subjects in Your Selected Section:</p>
-        <div id="subject-preview-pills" class="flex flex-wrap gap-1.5"></div>
+      <div id="wiz-subjects-box" class="hidden p-4 rounded-2xl bg-slate-50 border border-slate-200 mb-5">
+        <p class="text-xs font-bold text-slate-600 mb-2">📚 Subjects in Your Section:</p>
+        <div id="wiz-subject-pills" class="flex flex-wrap gap-1.5"></div>
       </div>
 
-      <button type="button" id="join-cohort-btn" disabled
-        class="w-full py-3.5 px-6 rounded-2xl font-bold text-sm text-white bg-brand-600 hover:bg-brand-700 disabled:bg-slate-200 disabled:text-slate-400 disabled:cursor-not-allowed transition shadow-xs flex items-center justify-center gap-2">
-        <span>Open My Student Workspace</span>
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"/></svg>
+      <button type="button" id="btn-enter-workspace" disabled class="w-full py-3.5 rounded-2xl font-bold text-sm text-white bg-brand-600 hover:bg-brand-700 disabled:bg-slate-200 disabled:text-slate-400 transition">
+        Open My Student Workspace →
       </button>
     </div>
   </main>
 
-  <!-- ===================================================================== -->
-  <!-- VIEW 2: STUDENT PERSONAL PAGE (4 HORIZONTAL OPTIONS IN BELOW)         -->
-  <!-- ===================================================================== -->
-  <main id="view-student-dashboard" class="hidden flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 pt-5 pb-28">
-
-    <!-- Active Section Banner & Subject Room Switcher -->
-    <div class="bg-white rounded-2xl border border-slate-200 p-4 mb-5 shadow-xs">
+  <!-- VIEW 2: STUDENT PERSONAL PAGE (4 HORIZONTAL OPTIONS IN BELOW) -->
+  <main id="view-student" class="hidden flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 pt-5 pb-28">
+    <!-- Active Section & Subject Tabs -->
+    <div class="bg-white rounded-2xl border border-slate-200 p-4 mb-5">
       <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
         <div>
-          <span class="text-[11px] font-bold uppercase tracking-wider text-brand-600">Active Section</span>
-          <h2 id="dashboard-cohort-heading" class="text-sm sm:text-base font-extrabold text-slate-900">Section</h2>
+          <span class="text-[11px] font-bold uppercase text-brand-600">Active Section</span>
+          <h2 id="dash-cohort-title" class="text-sm sm:text-base font-extrabold text-slate-900">Section</h2>
         </div>
         <div class="flex items-center gap-2 text-xs text-slate-500">
-          <span>Studied Today: <strong id="mini-today-mins" class="text-brand-600 font-mono">0 mins</strong></span>
+          <span>Today: <strong id="mini-mins" class="text-brand-600 font-mono">0 mins</strong></span>
           <span>•</span>
-          <button type="button" id="change-section-link" class="text-brand-600 hover:underline font-semibold">Change Section</button>
+          <button type="button" id="btn-change-sec" class="text-brand-600 hover:underline font-semibold">Change Section</button>
         </div>
       </div>
-
-      <!-- Subject Tabs -->
-      <div class="flex items-center gap-2 overflow-x-auto pb-1" id="subject-room-tabs"></div>
+      <div id="subject-tabs" class="flex items-center gap-2 overflow-x-auto pb-1"></div>
     </div>
 
-    <!-- OPTION 1: STUDY MATERIALS (STARTS EMPTY UNTIL TEACHER UPLOADS) -->
-    <section id="student-section-materials" class="space-y-5">
-      <div class="flex items-center gap-2 overflow-x-auto pb-1" id="material-type-filters"></div>
-      <div id="materials-container"></div>
+    <!-- 1. STUDY MATERIALS (STARTS EMPTY UNTIL TEACHER UPLOADS) -->
+    <section id="sec-materials" class="space-y-4">
+      <div id="mat-filters" class="flex items-center gap-2 overflow-x-auto pb-1"></div>
+      <div id="mat-list"></div>
     </section>
 
-    <!-- OPTION 2: LIVE CLASSES (STARTS EMPTY UNTIL TEACHER SCHEDULES) -->
-    <section id="student-section-live" class="hidden space-y-5">
-      <div class="bg-white rounded-2xl border border-slate-200 p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+    <!-- 2. LIVE CLASSES (STARTS EMPTY UNTIL TEACHER STARTS) -->
+    <section id="sec-live" class="hidden space-y-4">
+      <div class="bg-white rounded-2xl border border-slate-200 p-4 flex items-center justify-between">
         <div>
-          <h3 class="font-extrabold text-slate-900 text-base">Live Classes — <span class="active-subj-name text-brand-600">Subject</span></h3>
-          <p class="text-xs text-slate-500 mt-0.5">Live lectures started by your subject teacher appear here. Joining automatically starts your stopwatch.</p>
+          <h3 class="font-extrabold text-slate-900 text-sm sm:text-base">Live Classes — <span class="lbl-subj text-brand-600">Subject</span></h3>
+          <p class="text-xs text-slate-500">Scheduled live classes by your teacher appear here.</p>
         </div>
-        <span class="px-3 py-1 rounded-full bg-slate-100 text-slate-700 text-xs font-bold self-start sm:self-auto" id="live-class-count-badge">0 Live Classes</span>
+        <span id="live-badge" class="px-3 py-1 rounded-full bg-slate-100 text-xs font-bold">0 Live</span>
       </div>
-
-      <div id="live-classes-container"></div>
+      <div id="live-list"></div>
     </section>
 
-    <!-- OPTION 3: YOUR STUDY TRACKER (STARTS AT ALL ZEROS) -->
-    <section id="student-section-tracker" class="hidden space-y-6">
-      <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <div class="bg-white rounded-2xl border border-slate-200 p-4 sm:p-5">
+    <!-- 3. YOUR STUDY TRACKER (STARTS AT ALL ZEROS) -->
+    <section id="sec-tracker" class="hidden space-y-5">
+      <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        <div class="bg-white rounded-2xl border border-slate-200 p-4">
           <p class="text-xs text-slate-500 font-semibold">Today's Study Time</p>
-          <p id="stat-today-minutes" class="text-2xl font-extrabold text-slate-900 mt-1">0 mins</p>
-          <p class="text-[11px] text-slate-400 font-medium mt-1">Daily Goal: 240 mins (4h)</p>
+          <p id="st-mins" class="text-2xl font-extrabold text-slate-900 mt-1">0 mins</p>
+          <p class="text-[11px] text-slate-400 mt-1">Goal: 240 mins (4h)</p>
         </div>
-        <div class="bg-white rounded-2xl border border-slate-200 p-4 sm:p-5">
+        <div class="bg-white rounded-2xl border border-slate-200 p-4">
           <p class="text-xs text-slate-500 font-semibold">Tests Attended</p>
-          <p id="stat-tests-done" class="text-2xl font-extrabold text-brand-600 mt-1">0</p>
-          <p id="stat-avg-score" class="text-[11px] text-slate-400 font-medium mt-1">Avg Score: 0%</p>
+          <p id="st-tests" class="text-2xl font-extrabold text-brand-600 mt-1">0</p>
+          <p id="st-avg" class="text-[11px] text-slate-400 mt-1">Avg Score: 0%</p>
         </div>
-        <div class="bg-white rounded-2xl border border-slate-200 p-4 sm:p-5">
+        <div class="bg-white rounded-2xl border border-slate-200 p-4">
           <p class="text-xs text-slate-500 font-semibold">Current Streak</p>
-          <p id="stat-streak-days" class="text-2xl font-extrabold text-amber-600 mt-1">0 Days</p>
-          <p class="text-[11px] text-slate-400 font-medium mt-1">Log study today to start</p>
+          <p id="st-streak" class="text-2xl font-extrabold text-amber-600 mt-1">0 Days</p>
+          <p class="text-[11px] text-slate-400 mt-1">Study today to start</p>
         </div>
-        <div class="bg-white rounded-2xl border border-slate-200 p-4 sm:p-5">
-          <p class="text-xs text-slate-500 font-semibold">Planner Goals Done</p>
-          <p id="stat-planner-done" class="text-2xl font-extrabold text-emerald-600 mt-1">0 / 0</p>
-          <button type="button" id="tracker-open-planner-btn" class="text-[11px] text-brand-600 font-bold hover:underline mt-1">Open Daily Planner →</button>
+        <div class="bg-white rounded-2xl border border-slate-200 p-4">
+          <p class="text-xs text-slate-500 font-semibold">Planner Tasks</p>
+          <p id="st-planner" class="text-2xl font-extrabold text-emerald-600 mt-1">0 / 0</p>
+          <button type="button" id="btn-tracker-planner" class="text-[11px] text-brand-600 font-bold hover:underline mt-1">Open Planner →</button>
         </div>
       </div>
 
-      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        <!-- Stopwatch & Manual Session Logger -->
-        <div class="lg:col-span-5 bg-white rounded-3xl border border-slate-200 p-6 shadow-xs flex flex-col justify-between">
-          <div>
-            <div class="flex items-center justify-between mb-3">
-              <span class="px-3 py-1 rounded-full bg-brand-50 text-brand-700 text-xs font-bold">Stopwatch & Manual Log</span>
-              <span class="active-subj-name text-xs font-semibold text-slate-500">Subject</span>
-            </div>
-
-            <div class="my-4 text-center py-7 rounded-2xl bg-slate-900 text-white">
-              <p class="text-[11px] uppercase tracking-widest text-indigo-300 mb-1">Active Study Stopwatch</p>
-              <div id="tracker-stopwatch-display" class="font-mono text-4xl font-extrabold tracking-wider">00:00:00</div>
-              <p id="tracker-stopwatch-status" class="text-xs text-slate-400 mt-2">Not started yet (0s)</p>
-            </div>
-
-            <div class="grid grid-cols-2 gap-2.5 mb-5">
-              <button type="button" id="tracker-toggle-btn" class="py-3 px-4 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-bold text-xs sm:text-sm transition">
-                ▶ Start Clock
-              </button>
-              <button type="button" id="tracker-save-btn" class="py-3 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs sm:text-sm transition">
-                ✓ Save to Today
-              </button>
-            </div>
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-5">
+        <div class="lg:col-span-5 bg-white rounded-3xl border border-slate-200 p-5">
+          <div class="flex justify-between items-center mb-3">
+            <span class="px-2.5 py-1 rounded-full bg-brand-50 text-brand-700 text-xs font-bold">Stopwatch</span>
+            <span class="lbl-subj text-xs font-semibold text-slate-500">Subject</span>
           </div>
-
-          <!-- Offline Manual Logger -->
-          <form id="manual-study-form" class="pt-4 border-t border-slate-100">
-            <label for="manual-mins-input" class="block text-xs font-bold text-slate-600 mb-2">Studied Offline? Log Minutes Manually:</label>
-            <div class="flex items-center gap-2">
-              <input id="manual-mins-input" type="number" min="1" max="600" required placeholder="Minutes (e.g. 45)"
-                class="flex-1 px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm font-medium outline-none focus:border-brand-500" />
-              <button type="submit" class="px-4 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold transition">
-                + Add
-              </button>
-            </div>
+          <div class="my-3 text-center py-6 rounded-2xl bg-slate-900 text-white">
+            <div id="trk-clock" class="font-mono text-3xl sm:text-4xl font-extrabold">00:00:00</div>
+            <p id="trk-clock-status" class="text-xs text-slate-400 mt-1">Not started yet (0s)</p>
+          </div>
+          <div class="grid grid-cols-2 gap-2 mb-4">
+            <button type="button" id="trk-toggle" class="py-2.5 rounded-xl bg-brand-600 text-white font-bold text-xs sm:text-sm">▶ Start Clock</button>
+            <button type="button" id="trk-save" class="py-2.5 rounded-xl bg-emerald-600 text-white font-bold text-xs sm:text-sm">✓ Save Time</button>
+          </div>
+          <form id="form-manual-mins" class="pt-3 border-t border-slate-100 flex gap-2">
+            <input id="inp-manual-mins" type="number" min="1" max="600" required placeholder="Manual mins (e.g. 45)" class="flex-1 px-3 py-2 rounded-xl border border-slate-200 text-xs outline-none" />
+            <button type="submit" class="px-4 py-2 rounded-xl bg-slate-900 text-white text-xs font-bold">+ Add</button>
           </form>
         </div>
 
-        <!-- Subject-Wise Breakdown & Daily Target Bar -->
-        <div class="lg:col-span-7 bg-white rounded-3xl border border-slate-200 p-6 shadow-xs">
-          <div class="flex items-center justify-between mb-2">
-            <h3 id="daily-goal-heading" class="font-bold text-slate-900 text-sm">Daily Target Progress (0 / 240 mins)</h3>
-            <span id="daily-goal-percent" class="text-xs font-extrabold text-brand-600">0%</span>
+        <div class="lg:col-span-7 bg-white rounded-3xl border border-slate-200 p-5">
+          <div class="flex justify-between items-center mb-2">
+            <h3 id="goal-heading" class="font-bold text-slate-900 text-sm">Daily Goal Progress (0 / 240 mins)</h3>
+            <span id="goal-pct" class="text-xs font-extrabold text-brand-600">0%</span>
           </div>
-          <div class="w-full h-3 bg-slate-100 rounded-full overflow-hidden mb-6">
-            <div id="daily-goal-bar" class="h-full bg-gradient-to-r from-brand-500 to-emerald-500 rounded-full transition-all duration-500" style="width: 0%"></div>
+          <div class="w-full h-3 bg-slate-100 rounded-full overflow-hidden mb-5">
+            <div id="goal-bar" class="h-full bg-brand-600 rounded-full transition-all" style="width:0%"></div>
           </div>
-
-          <h4 class="text-xs font-bold uppercase tracking-wider text-slate-500 mb-3">Subject-Wise Study Breakdown Today</h4>
-          <div id="subject-study-breakdown" class="space-y-3.5"></div>
+          <h4 class="text-xs font-bold uppercase text-slate-500 mb-3">Subject-Wise Time Today</h4>
+          <div id="subj-breakdown" class="space-y-3"></div>
         </div>
       </div>
     </section>
 
-    <!-- OPTION 4: ROOMS (3 DEDICATED ROOMS) -->
-    <section id="student-section-rooms" class="hidden space-y-5">
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-3.5">
-        <!-- 1. Students-Only Room -->
-        <button type="button" data-room="students_only" id="room-card-students_only"
-          class="room-switch-card text-left p-4 rounded-2xl border-2 border-emerald-500 bg-emerald-50/70 transition flex items-start gap-3">
-          <div class="w-9 h-9 rounded-xl bg-emerald-600 text-white flex items-center justify-center shrink-0 font-bold text-base">🔒</div>
-          <div>
-            <div class="flex flex-wrap items-center gap-1.5">
-              <h3 class="font-extrabold text-slate-900 text-xs sm:text-sm">1. Students-Only Room</h3>
-              <span class="px-2 py-0.5 rounded-full bg-rose-100 text-rose-700 text-[9px] font-extrabold uppercase">No Teachers</span>
-            </div>
-            <p class="text-[11px] text-slate-600 mt-1">Private peer room for <strong class="active-subj-name">Subject</strong>. Teachers are strictly blocked.</p>
+    <!-- 4. ROOMS (3 DEDICATED DISCUSSION ROOMS) -->
+    <section id="sec-rooms" class="hidden space-y-4">
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+        <button type="button" data-room="students_only" id="rcard-students_only" class="room-btn text-left p-4 rounded-2xl border-2 border-emerald-500 bg-emerald-50/70">
+          <div class="flex items-center gap-1.5">
+            <span class="font-extrabold text-slate-900 text-xs sm:text-sm">🔒 1. Students-Only Room</span>
+            <span class="px-1.5 py-0.5 rounded bg-rose-100 text-rose-700 text-[9px] font-extrabold">NO TEACHERS</span>
           </div>
+          <p class="text-[11px] text-slate-600 mt-1">Private peer room for <strong class="lbl-subj">Subject</strong>. Faculty strictly blocked.</p>
         </button>
 
-        <!-- 2. Teacher-Student Room -->
-        <button type="button" data-room="teacher_student" id="room-card-teacher_student"
-          class="room-switch-card text-left p-4 rounded-2xl border-2 border-slate-200 bg-white hover:border-brand-300 transition flex items-start gap-3">
-          <div class="w-9 h-9 rounded-xl bg-brand-600 text-white flex items-center justify-center shrink-0 font-bold text-base">🎓</div>
-          <div>
-            <div class="flex flex-wrap items-center gap-1.5">
-              <h3 class="font-extrabold text-slate-900 text-xs sm:text-sm">2. Teacher-Student Room</h3>
-              <span class="px-2 py-0.5 rounded-full bg-brand-100 text-brand-700 text-[9px] font-extrabold uppercase">Faculty + Class</span>
-            </div>
-            <p class="text-[11px] text-slate-600 mt-1">Official doubt-solving & guidance room with your <strong class="active-subj-name">Subject</strong> teacher.</p>
+        <button type="button" data-room="teacher_student" id="rcard-teacher_student" class="room-btn text-left p-4 rounded-2xl border-2 border-slate-200 bg-white">
+          <div class="flex items-center gap-1.5">
+            <span class="font-extrabold text-slate-900 text-xs sm:text-sm">🎓 2. Teacher-Student Room</span>
+            <span class="px-1.5 py-0.5 rounded bg-brand-100 text-brand-700 text-[9px] font-extrabold">FACULTY + CLASS</span>
           </div>
+          <p class="text-[11px] text-slate-600 mt-1">Official doubt room with your <strong class="lbl-subj">Subject</strong> teacher.</p>
         </button>
 
-        <!-- 3. All Department All Students Room -->
-        <button type="button" data-room="all_department" id="room-card-all_department"
-          class="room-switch-card text-left p-4 rounded-2xl border-2 border-slate-200 bg-white hover:border-violet-300 transition flex items-start gap-3">
-          <div class="w-9 h-9 rounded-xl bg-violet-600 text-white flex items-center justify-center shrink-0 font-bold text-base">🏛️</div>
-          <div>
-            <div class="flex flex-wrap items-center gap-1.5">
-              <h3 class="font-extrabold text-slate-900 text-xs sm:text-sm">3. All Department All Students</h3>
-              <span class="px-2 py-0.5 rounded-full bg-violet-100 text-violet-700 text-[9px] font-extrabold uppercase">All Years</span>
-            </div>
-            <p class="text-[11px] text-slate-600 mt-1">Connect with seniors & juniors across <span id="dept-room-label" class="font-semibold">Department</span>.</p>
+        <button type="button" data-room="all_department" id="rcard-all_department" class="room-btn text-left p-4 rounded-2xl border-2 border-slate-200 bg-white">
+          <div class="flex items-center gap-1.5">
+            <span class="font-extrabold text-slate-900 text-xs sm:text-sm">🏛️ 3. All Dept All Students</span>
+            <span class="px-1.5 py-0.5 rounded bg-violet-100 text-violet-700 text-[9px] font-extrabold">ALL YEARS</span>
           </div>
+          <p class="text-[11px] text-slate-600 mt-1">Seniors & juniors across <span id="lbl-dept" class="font-semibold">Department</span>.</p>
         </button>
       </div>
 
-      <!-- Chat Feed Container -->
-      <div class="bg-white rounded-3xl border border-slate-200 shadow-xs overflow-hidden flex flex-col h-[430px]">
-        <div id="chat-room-header" class="px-5 py-3.5 bg-emerald-900 text-white flex items-center justify-between gap-2">
-          <div class="flex items-center gap-2.5 min-w-0">
-            <span id="chat-header-icon">🔒</span>
-            <div class="min-w-0">
-              <h4 id="chat-header-title" class="font-bold text-sm truncate">1. Students-Only Room</h4>
-              <p id="chat-header-subtitle" class="text-[11px] text-emerald-200 truncate">Private Peer Discussion • Faculty Strictly Blocked</p>
-            </div>
+      <div class="bg-white rounded-3xl border border-slate-200 overflow-hidden flex flex-col h-[400px]">
+        <div id="chat-hdr" class="px-5 py-3 bg-emerald-900 text-white flex items-center justify-between">
+          <div>
+            <h4 id="chat-title" class="font-bold text-sm">1. Students-Only Room</h4>
+            <p id="chat-sub" class="text-[11px] text-emerald-200">Private Peer Discussion • Faculty Strictly Blocked</p>
           </div>
-          <span id="chat-room-scope-badge" class="px-2.5 py-1 rounded-full bg-white/15 text-[11px] font-semibold shrink-0">Section Peers</span>
+          <span id="chat-badge" class="px-2.5 py-1 rounded-full bg-white/15 text-[11px] font-semibold">Peers Only</span>
         </div>
-
-        <div id="chat-messages-feed" class="flex-1 p-5 overflow-y-auto space-y-3 bg-slate-50/70"></div>
-
-        <form id="student-chat-form" class="p-3.5 bg-white border-t border-slate-200 flex items-center gap-2.5">
-          <input id="student-chat-input" type="text" required placeholder="Write a message in this room..."
-            class="flex-1 px-4 py-2.5 rounded-xl bg-slate-100 focus:bg-white border border-transparent focus:border-brand-500 outline-none text-sm transition" />
-          <button type="submit" class="px-5 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-bold text-sm transition shrink-0">
-            Send
-          </button>
+        <div id="chat-feed" class="flex-1 p-4 overflow-y-auto space-y-2.5 bg-slate-50"></div>
+        <form id="form-student-chat" class="p-3 bg-white border-t border-slate-200 flex gap-2">
+          <input id="inp-student-chat" type="text" required placeholder="Type a message..." class="flex-1 px-3.5 py-2 rounded-xl bg-slate-100 text-sm outline-none" />
+          <button type="submit" class="px-4 py-2 rounded-xl bg-brand-600 text-white font-bold text-sm">Send</button>
         </form>
       </div>
     </section>
 
-    <!-- FOUR HORIZONTAL OPTIONS IN BELOW (FIXED BOTTOM BAR) -->
-    <nav aria-label="Student Bottom Navigation" class="fixed bottom-0 inset-x-0 z-30 bg-white/95 backdrop-blur-md border-t border-slate-200 shadow-[0_-4px_20px_rgba(15,23,42,0.06)]">
-      <div class="max-w-4xl mx-auto px-2 sm:px-6 h-16 sm:h-[72px] grid grid-cols-4 gap-1 sm:gap-3 items-center">
-        <button type="button" data-tab="materials" id="bottom-nav-materials"
-          class="bottom-nav-btn flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 py-2 px-1 sm:px-3 rounded-2xl bg-brand-50 text-brand-700 font-extrabold transition">
-          <span class="text-base sm:text-lg">📚</span>
-          <span class="text-[10px] sm:text-xs leading-tight text-center">Study Materials</span>
+    <!-- FOUR HORIZONTAL OPTIONS IN BELOW -->
+    <nav class="fixed bottom-0 inset-x-0 z-30 bg-white border-t border-slate-200 shadow-lg">
+      <div class="max-w-4xl mx-auto px-2 h-16 grid grid-cols-4 gap-1 items-center">
+        <button type="button" data-tab="materials" id="nav-materials" class="bnav-btn flex flex-col sm:flex-row items-center justify-center gap-1 py-2 rounded-xl bg-brand-50 text-brand-700 font-extrabold text-[10px] sm:text-xs">
+          <span>📚</span><span>Study Materials</span>
         </button>
-
-        <button type="button" data-tab="live" id="bottom-nav-live"
-          class="bottom-nav-btn flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 py-2 px-1 sm:px-3 rounded-2xl text-slate-600 hover:bg-slate-100 font-bold transition">
-          <span class="text-base sm:text-lg">🎥</span>
-          <span class="text-[10px] sm:text-xs leading-tight text-center">Live Classes</span>
+        <button type="button" data-tab="live" id="nav-live" class="bnav-btn flex flex-col sm:flex-row items-center justify-center gap-1 py-2 rounded-xl text-slate-600 font-bold text-[10px] sm:text-xs">
+          <span>🎥</span><span>Live Classes</span>
         </button>
-
-        <button type="button" data-tab="tracker" id="bottom-nav-tracker"
-          class="bottom-nav-btn flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 py-2 px-1 sm:px-3 rounded-2xl text-slate-600 hover:bg-slate-100 font-bold transition">
-          <span class="text-base sm:text-lg">⏱️</span>
-          <span class="text-[10px] sm:text-xs leading-tight text-center">Your Study Tracker</span>
+        <button type="button" data-tab="tracker" id="nav-tracker" class="bnav-btn flex flex-col sm:flex-row items-center justify-center gap-1 py-2 rounded-xl text-slate-600 font-bold text-[10px] sm:text-xs">
+          <span>⏱️</span><span>Your Study Tracker</span>
         </button>
-
-        <button type="button" data-tab="rooms" id="bottom-nav-rooms"
-          class="bottom-nav-btn flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 py-2 px-1 sm:px-3 rounded-2xl text-slate-600 hover:bg-slate-100 font-bold transition">
-          <span class="text-base sm:text-lg">💬</span>
-          <span class="text-[10px] sm:text-xs leading-tight text-center">Rooms</span>
+        <button type="button" data-tab="rooms" id="nav-rooms" class="bnav-btn flex flex-col sm:flex-row items-center justify-center gap-1 py-2 rounded-xl text-slate-600 font-bold text-[10px] sm:text-xs">
+          <span>💬</span><span>Rooms</span>
         </button>
       </div>
     </nav>
   </main>
 
-  <!-- ===================================================================== -->
-  <!-- VIEW 3: EXCLUSIVE TEACHER PORTAL (PIN PROTECTED - PIN: 2026)          -->
-  <!-- ===================================================================== -->
-  <main id="view-teacher-portal" class="hidden flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
-    <div class="bg-slate-900 text-white rounded-3xl p-6 mb-6 flex flex-col lg:flex-row lg:items-center justify-between gap-4 shadow-md">
+  <!-- VIEW 3: EXCLUSIVE TEACHER PORTAL (PIN: 2026) -->
+  <main id="view-teacher" class="hidden flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 py-6">
+    <div class="bg-slate-900 text-white rounded-3xl p-5 mb-5 flex flex-col lg:flex-row lg:items-center justify-between gap-3">
       <div>
-        <div class="flex items-center gap-2 mb-1">
-          <span class="px-2.5 py-0.5 rounded-full bg-amber-400 text-slate-950 text-[11px] font-extrabold uppercase">Teacher Mode Active</span>
-          <span class="text-xs text-slate-400">PIN Verified • Auto-Saved</span>
-        </div>
-        <h1 class="text-xl sm:text-2xl font-extrabold">Faculty Command Center & Material Publisher</h1>
-        <p class="text-xs sm:text-sm text-slate-300 mt-1">Upload study materials, host live classes, monitor real-time student study hours, and answer doubts in Teacher-Student Rooms.</p>
+        <span class="px-2 py-0.5 rounded-full bg-amber-400 text-slate-950 text-[10px] font-extrabold uppercase">Teacher Mode • PIN Verified</span>
+        <h1 class="text-xl font-extrabold mt-1">Faculty Portal & Material Uploader</h1>
       </div>
-      <div class="flex flex-wrap items-center gap-2 shrink-0">
-        <button type="button" id="share-sync-link-btn" class="px-3.5 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-500 text-white text-xs font-bold transition">
-          🔗 Copy Student Sync Link
-        </button>
-        <button type="button" id="reset-portal-data-btn" class="px-3.5 py-2.5 rounded-xl bg-rose-600/20 hover:bg-rose-600/40 text-rose-200 border border-rose-500/30 text-xs font-bold transition">
-          🗑️ Reset Data
-        </button>
-        <button type="button" id="exit-teacher-btn" class="px-4 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-bold transition">
-          ← Switch to Student View
-        </button>
+      <div class="flex flex-wrap gap-2">
+        <button type="button" id="btn-sync-link" class="px-3 py-2 rounded-xl bg-brand-600 text-white text-xs font-bold">🔗 Copy Sync Link</button>
+        <button type="button" id="btn-reset-all" class="px-3 py-2 rounded-xl bg-rose-600/30 text-rose-200 text-xs font-bold">🗑️ Reset Data</button>
+        <button type="button" id="btn-exit-teacher" class="px-3 py-2 rounded-xl bg-white/15 text-white text-xs font-bold">← Student View</button>
       </div>
     </div>
 
-    <!-- Teacher Navigation Tabs -->
-    <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 bg-slate-200/70 p-1.5 rounded-2xl mb-6">
-      <button type="button" data-ttab="upload" id="t-tab-upload"
-        class="teacher-nav-tab py-2.5 px-3 rounded-xl text-xs sm:text-sm font-bold bg-white text-slate-900 shadow-xs transition">
-        📤 Upload Materials
-      </button>
-      <button type="button" data-ttab="host_live" id="t-tab-host_live"
-        class="teacher-nav-tab py-2.5 px-3 rounded-xl text-xs sm:text-sm font-bold text-slate-600 hover:text-slate-900 transition">
-        🎥 Host Live Class
-      </button>
-      <button type="button" data-ttab="analytics" id="t-tab-analytics"
-        class="teacher-nav-tab py-2.5 px-3 rounded-xl text-xs sm:text-sm font-bold text-slate-600 hover:text-slate-900 transition">
-        📊 Student Analytics
-      </button>
-      <button type="button" data-ttab="faculty_chat" id="t-tab-faculty_chat"
-        class="teacher-nav-tab py-2.5 px-3 rounded-xl text-xs sm:text-sm font-bold text-slate-600 hover:text-slate-900 transition">
-        🎓 Teacher-Student Room
-      </button>
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 bg-slate-200/70 p-1.5 rounded-2xl mb-5">
+      <button type="button" data-ttab="upload" id="ttab-upload" class="tnav-btn py-2 px-3 rounded-xl text-xs font-bold bg-white text-slate-900">📤 Upload Materials</button>
+      <button type="button" data-ttab="host" id="ttab-host" class="tnav-btn py-2 px-3 rounded-xl text-xs font-bold text-slate-600">🎥 Host Live Class</button>
+      <button type="button" data-ttab="analytics" id="ttab-analytics" class="tnav-btn py-2 px-3 rounded-xl text-xs font-bold text-slate-600">📊 Student Analytics</button>
+      <button type="button" data-ttab="fchat" id="ttab-fchat" class="tnav-btn py-2 px-3 rounded-xl text-xs font-bold text-slate-600">🎓 Teacher-Student Room</button>
     </div>
 
-    <!-- TEACHER TAB 1: UPLOAD STUDY MATERIALS -->
-    <section id="teacher-section-upload">
-      <div class="bg-white rounded-3xl border border-slate-200 p-6 sm:p-8 shadow-xs max-w-3xl mx-auto">
-        <div class="mb-6">
-          <span class="px-3 py-1 rounded-full bg-brand-50 text-brand-700 text-xs font-bold">Exclusive Teacher Upload Rights</span>
-          <h2 class="text-xl font-extrabold text-slate-900 mt-2">Upload Study Material or Practice Test</h2>
-          <p class="text-xs sm:text-sm text-slate-500">Students see 0 materials until you publish them here for their Class/Course, Branch, Year & Subject.</p>
+    <!-- Teacher Upload -->
+    <section id="tsec-upload" class="bg-white rounded-3xl border border-slate-200 p-6 max-w-3xl mx-auto">
+      <h2 class="text-lg font-extrabold text-slate-900 mb-4">Publish Study Material or MCQ Test</h2>
+      <form id="form-upload" class="space-y-3">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <select id="up-level" class="px-3 py-2.5 rounded-xl border border-slate-200 text-xs font-bold bg-white"></select>
+          <select id="up-course" class="px-3 py-2.5 rounded-xl border border-slate-200 text-xs font-bold bg-white"></select>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <select id="up-branch" class="px-3 py-2.5 rounded-xl border border-slate-200 text-xs font-bold bg-white"></select>
+          <select id="up-year" class="px-3 py-2.5 rounded-xl border border-slate-200 text-xs font-bold bg-white"></select>
+          <select id="up-subject" class="px-3 py-2.5 rounded-xl border border-slate-200 text-xs font-bold bg-white"></select>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <select id="up-type" class="px-3 py-2.5 rounded-xl border border-slate-200 text-xs font-bold bg-white">
+            <option value="Books">📘 Reference Book</option>
+            <option value="Notes">📝 Lecture Notes</option>
+            <option value="Formula">📐 Formula Sheet</option>
+            <option value="Short Notes">⚡ Short Notes</option>
+            <option value="Mindmaps">🧠 Mindmap</option>
+            <option value="PYQs">📜 PYQs</option>
+            <option value="Model Paper">📄 Model Paper</option>
+            <option value="Tests">✅ Interactive MCQ Test</option>
+          </select>
+          <input id="up-faculty" type="text" required placeholder="Teacher Name (e.g. Prof. Sharma)" class="px-3 py-2.5 rounded-xl border border-slate-200 text-xs font-medium" />
+        </div>
+        <input id="up-title" type="text" required placeholder="Title (e.g. Chapter 1 Formula Sheet & Notes)" class="w-full px-3 py-2.5 rounded-xl border border-slate-200 text-xs font-medium" />
+
+        <div id="up-std-box" class="space-y-2">
+          <textarea id="up-content" rows="4" placeholder="Write notes, formulas, or solutions here..." class="w-full px-3 py-2.5 rounded-xl border border-slate-200 text-xs"></textarea>
+          <input id="up-file" type="file" accept=".pdf,.png,.jpg,.jpeg,.txt,.doc,.docx" class="w-full text-xs text-slate-600" />
         </div>
 
-        <form id="teacher-upload-form" class="space-y-4">
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label for="up-level" class="block text-xs font-bold text-slate-600 mb-1.5">1. Target Level</label>
-              <select id="up-level" required class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm font-medium bg-white"></select>
-            </div>
-            <div>
-              <label for="up-course" class="block text-xs font-bold text-slate-600 mb-1.5">2. Stream / Course</label>
-              <select id="up-course" required class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm font-medium bg-white"></select>
-            </div>
+        <div id="up-quiz-box" class="hidden p-4 rounded-2xl bg-emerald-50 border border-emerald-200 space-y-3">
+          <div class="flex justify-between items-center">
+            <span class="text-xs font-extrabold text-emerald-900">MCQ Test Questions</span>
+            <button type="button" id="btn-add-q" class="px-3 py-1 rounded-lg bg-emerald-700 text-white text-xs font-bold">+ Add Question</button>
           </div>
+          <div id="quiz-q-list" class="space-y-3"></div>
+        </div>
 
-          <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div>
-              <label for="up-branch" class="block text-xs font-bold text-slate-600 mb-1.5">3. Branch / Section</label>
-              <select id="up-branch" required class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm font-medium bg-white"></select>
-            </div>
-            <div>
-              <label for="up-year" class="block text-xs font-bold text-slate-600 mb-1.5">4. Target Year</label>
-              <select id="up-year" required class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm font-medium bg-white"></select>
-            </div>
-            <div>
-              <label for="up-subject" class="block text-xs font-bold text-slate-600 mb-1.5">5. Subject</label>
-              <select id="up-subject" required class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm font-medium bg-white"></select>
-            </div>
-          </div>
-
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label for="up-type" class="block text-xs font-bold text-slate-600 mb-1.5">6. Material Type</label>
-              <select id="up-type" required class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm font-medium bg-white">
-                <option value="Books">📘 Reference Book</option>
-                <option value="Notes">📝 Lecture Notes</option>
-                <option value="Formula">📐 Formula Sheet</option>
-                <option value="Short Notes">⚡ Short Notes</option>
-                <option value="Mindmaps">🧠 Mindmap</option>
-                <option value="PYQs">📜 Previous Year Questions (PYQs)</option>
-                <option value="Model Paper">📄 Model Paper</option>
-                <option value="Tests">✅ Interactive MCQ Test</option>
-              </select>
-            </div>
-            <div>
-              <label for="up-faculty" class="block text-xs font-bold text-slate-600 mb-1.5">7. Teacher Name</label>
-              <input id="up-faculty" type="text" required placeholder="e.g., Prof. R. K. Verma"
-                class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm font-medium" />
-            </div>
-          </div>
-
-          <div>
-            <label for="up-title" class="block text-xs font-bold text-slate-600 mb-1.5">8. Material / Test Title</label>
-            <input id="up-title" type="text" required placeholder="e.g., Unit 1 Complete Formula Sheet & Derivations"
-              class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm font-medium" />
-          </div>
-
-          <!-- Standard Material Content + Optional File Attachment -->
-          <div id="standard-material-content-box" class="space-y-3">
-            <div>
-              <label for="up-content" class="block text-xs font-bold text-slate-600 mb-1.5">9. Study Notes / Formulas / Solutions Text</label>
-              <textarea id="up-content" rows="4" placeholder="Write the notes, formulas, PYQ solutions, or key concepts for your students..."
-                class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm font-medium"></textarea>
-            </div>
-            <div>
-              <label for="up-file" class="block text-xs font-bold text-slate-600 mb-1.5">10. Attach PDF / Image / Document (Optional, up to 1.5MB)</label>
-              <input id="up-file" type="file" accept=".pdf,.png,.jpg,.jpeg,.webp,.txt,.doc,.docx"
-                class="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs text-slate-600 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-brand-50 file:text-brand-700 hover:file:bg-brand-100" />
-            </div>
-          </div>
-
-          <!-- Multi-Question MCQ Test Builder -->
-          <div id="test-builder-box" class="hidden p-4 rounded-2xl bg-emerald-50/70 border border-emerald-200 space-y-4">
-            <div class="flex items-center justify-between">
-              <p class="text-xs font-extrabold text-emerald-900">MCQ Test Questions Builder</p>
-              <button type="button" id="add-quiz-question-btn" class="px-3 py-1.5 rounded-lg bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold transition">
-                + Add Another Question
-              </button>
-            </div>
-            <div id="quiz-builder-questions-list" class="space-y-3"></div>
-          </div>
-
-          <button type="submit" class="w-full py-3.5 px-6 rounded-2xl bg-brand-600 hover:bg-brand-700 text-white font-bold text-sm transition shadow-xs">
-            Publish to Student Section Page
-          </button>
-        </form>
-      </div>
+        <button type="submit" class="w-full py-3 rounded-2xl bg-brand-600 text-white font-bold text-sm">Publish to Student Page</button>
+      </form>
     </section>
 
-    <!-- TEACHER TAB 2: HOST / SCHEDULE LIVE CLASS -->
-    <section id="teacher-section-host_live" class="hidden">
-      <div class="bg-white rounded-3xl border border-slate-200 p-6 sm:p-8 shadow-xs max-w-2xl mx-auto">
-        <span class="px-3 py-1 rounded-full bg-rose-50 text-rose-700 text-xs font-bold">Live Classroom Broadcaster</span>
-        <h2 class="text-xl font-extrabold text-slate-900 mt-2">Start a Live Class</h2>
-        <p class="text-xs sm:text-sm text-slate-500 mb-6">Started classes appear immediately inside the student's <strong>Live Classes</strong> tab.</p>
-
-        <form id="teacher-live-form" class="space-y-4">
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label for="live-level" class="block text-xs font-bold text-slate-600 mb-1.5">1. Target Level</label>
-              <select id="live-level" required class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm font-medium bg-white"></select>
-            </div>
-            <div>
-              <label for="live-course" class="block text-xs font-bold text-slate-600 mb-1.5">2. Stream / Course</label>
-              <select id="live-course" required class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm font-medium bg-white"></select>
-            </div>
-          </div>
-
-          <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div>
-              <label for="live-branch" class="block text-xs font-bold text-slate-600 mb-1.5">3. Branch / Section</label>
-              <select id="live-branch" required class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm font-medium bg-white"></select>
-            </div>
-            <div>
-              <label for="live-year" class="block text-xs font-bold text-slate-600 mb-1.5">4. Target Year</label>
-              <select id="live-year" required class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm font-medium bg-white"></select>
-            </div>
-            <div>
-              <label for="live-subject" class="block text-xs font-bold text-slate-600 mb-1.5">5. Subject</label>
-              <select id="live-subject" required class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm font-medium bg-white"></select>
-            </div>
-          </div>
-
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label for="live-topic" class="block text-xs font-bold text-slate-600 mb-1.5">6. Lecture Topic</label>
-              <input id="live-topic" type="text" required placeholder="e.g., Live Doubt Session & PYQ Walkthrough"
-                class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm font-medium" />
-            </div>
-            <div>
-              <label for="live-teacher" class="block text-xs font-bold text-slate-600 mb-1.5">7. Faculty Name</label>
-              <input id="live-teacher" type="text" required placeholder="e.g., Dr. Meera Joshi"
-                class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm font-medium" />
-            </div>
-          </div>
-
-          <button type="submit" class="w-full py-3.5 px-6 rounded-2xl bg-rose-600 hover:bg-rose-700 text-white font-bold text-sm transition">
-            🔴 Go Live Now for Students
-          </button>
-        </form>
-      </div>
+    <!-- Teacher Host Live -->
+    <section id="tsec-host" class="hidden bg-white rounded-3xl border border-slate-200 p-6 max-w-2xl mx-auto">
+      <h2 class="text-lg font-extrabold text-slate-900 mb-4">Start a Live Class</h2>
+      <form id="form-live" class="space-y-3">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <select id="lv-level" class="px-3 py-2.5 rounded-xl border border-slate-200 text-xs font-bold bg-white"></select>
+          <select id="lv-course" class="px-3 py-2.5 rounded-xl border border-slate-200 text-xs font-bold bg-white"></select>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <select id="lv-branch" class="px-3 py-2.5 rounded-xl border border-slate-200 text-xs font-bold bg-white"></select>
+          <select id="lv-year" class="px-3 py-2.5 rounded-xl border border-slate-200 text-xs font-bold bg-white"></select>
+          <select id="lv-subject" class="px-3 py-2.5 rounded-xl border border-slate-200 text-xs font-bold bg-white"></select>
+        </div>
+        <input id="lv-topic" type="text" required placeholder="Lecture Topic" class="w-full px-3 py-2.5 rounded-xl border border-slate-200 text-xs" />
+        <input id="lv-teacher" type="text" required placeholder="Faculty Name" class="w-full px-3 py-2.5 rounded-xl border border-slate-200 text-xs" />
+        <button type="submit" class="w-full py-3 rounded-2xl bg-rose-600 text-white font-bold text-sm">🔴 Go Live Now</button>
+      </form>
     </section>
 
-    <!-- TEACHER TAB 3: STUDENT PERFORMANCE ANALYTICS -->
-    <section id="teacher-section-analytics" class="hidden space-y-6">
-      <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <div class="bg-white p-5 rounded-2xl border border-slate-200">
-          <p class="text-xs text-slate-500 font-semibold">Active Students</p>
-          <p id="t-stat-students" class="text-2xl font-extrabold text-slate-900 mt-1">0</p>
-          <span class="text-[11px] text-slate-400 font-medium">Joined section</span>
-        </div>
-        <div class="bg-white p-5 rounded-2xl border border-slate-200">
-          <p class="text-xs text-slate-500 font-semibold">Total Study Time</p>
-          <p id="t-stat-minutes" class="text-2xl font-extrabold text-brand-600 mt-1">0 mins</p>
-          <span class="text-[11px] text-slate-400 font-medium">Synced from stopwatch</span>
-        </div>
-        <div class="bg-white p-5 rounded-2xl border border-slate-200">
-          <p class="text-xs text-slate-500 font-semibold">Uploaded Materials</p>
-          <p id="t-stat-materials" class="text-2xl font-extrabold text-emerald-600 mt-1">0</p>
-          <span class="text-[11px] text-slate-400 font-medium">Published by faculty</span>
-        </div>
-        <div class="bg-white p-5 rounded-2xl border border-slate-200">
-          <p class="text-xs text-slate-500 font-semibold">Live Classes Hosted</p>
-          <p id="t-stat-live" class="text-2xl font-extrabold text-rose-600 mt-1">0</p>
-          <span class="text-[11px] text-slate-400 font-medium">Active sessions</span>
-        </div>
+    <!-- Teacher Analytics -->
+    <section id="tsec-analytics" class="hidden space-y-4">
+      <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        <div class="bg-white p-4 rounded-2xl border border-slate-200"><p class="text-xs text-slate-500">Students</p><p id="ta-stu" class="text-2xl font-extrabold">0</p></div>
+        <div class="bg-white p-4 rounded-2xl border border-slate-200"><p class="text-xs text-slate-500">Total Study Time</p><p id="ta-min" class="text-2xl font-extrabold text-brand-600">0 mins</p></div>
+        <div class="bg-white p-4 rounded-2xl border border-slate-200"><p class="text-xs text-slate-500">Materials</p><p id="ta-mat" class="text-2xl font-extrabold text-emerald-600">0</p></div>
+        <div class="bg-white p-4 rounded-2xl border border-slate-200"><p class="text-xs text-slate-500">Live Classes</p><p id="ta-liv" class="text-2xl font-extrabold text-rose-600">0</p></div>
       </div>
-
-      <div class="bg-white rounded-3xl border border-slate-200 overflow-hidden shadow-xs">
-        <div class="p-5 border-b border-slate-200">
-          <h3 class="font-bold text-slate-900">Student Daily Study & Test Performance Log</h3>
-          <p class="text-xs text-slate-500">Starts at 0 mins and updates automatically as students log study hours and attempt tests.</p>
-        </div>
-        <div id="teacher-analytics-table-wrapper" class="overflow-x-auto"></div>
-      </div>
+      <div id="ta-table" class="bg-white rounded-3xl border border-slate-200 overflow-x-auto"></div>
     </section>
 
-    <!-- TEACHER TAB 4: TEACHER-STUDENT ROOM ONLY -->
-    <section id="teacher-section-faculty_chat" class="hidden space-y-5">
-      <div class="bg-rose-50 border border-rose-200 rounded-2xl p-4 flex items-start gap-3">
-        <span class="text-xl">🔒</span>
-        <div>
-          <h4 class="font-bold text-rose-900 text-sm">Students-Only Room & Department Peer Room Access Restricted</h4>
-          <p class="text-xs text-rose-700 mt-0.5">Teachers can only access the <strong>Teacher-Student Room</strong> below. The <strong>Students-Only Room</strong> is strictly private to students.</p>
-        </div>
+    <!-- Teacher-Student Room Only -->
+    <section id="tsec-fchat" class="hidden space-y-4">
+      <div class="bg-rose-50 border border-rose-200 rounded-2xl p-3 text-xs text-rose-800 font-semibold">
+        🔒 Students-Only Room is strictly blocked for teachers. You can message in the Teacher-Student Room below:
       </div>
-
-      <!-- Select Subject Room to Monitor/Reply -->
-      <div class="bg-white rounded-2xl border border-slate-200 p-4 grid grid-cols-1 sm:grid-cols-5 gap-2.5">
-        <select id="chat-t-level" class="px-3 py-2 rounded-xl border border-slate-200 text-xs font-bold bg-white"></select>
-        <select id="chat-t-course" class="px-3 py-2 rounded-xl border border-slate-200 text-xs font-bold bg-white"></select>
-        <select id="chat-t-branch" class="px-3 py-2 rounded-xl border border-slate-200 text-xs font-bold bg-white"></select>
-        <select id="chat-t-year" class="px-3 py-2 rounded-xl border border-slate-200 text-xs font-bold bg-white"></select>
-        <select id="chat-t-subject" class="px-3 py-2 rounded-xl border border-slate-200 text-xs font-bold bg-white"></select>
+      <div class="bg-white rounded-2xl border border-slate-200 p-3 grid grid-cols-2 sm:grid-cols-5 gap-2">
+        <select id="ct-level" class="px-2 py-2 rounded-xl border text-xs font-bold"></select>
+        <select id="ct-course" class="px-2 py-2 rounded-xl border text-xs font-bold"></select>
+        <select id="ct-branch" class="px-2 py-2 rounded-xl border text-xs font-bold"></select>
+        <select id="ct-year" class="px-2 py-2 rounded-xl border text-xs font-bold"></select>
+        <select id="ct-subject" class="px-2 py-2 rounded-xl border text-xs font-bold"></select>
       </div>
-
-      <div class="bg-white rounded-3xl border border-slate-200 shadow-xs overflow-hidden flex flex-col h-[400px]">
-        <div class="px-5 py-3.5 bg-brand-900 text-white flex items-center justify-between">
-          <div>
-            <h4 class="font-bold text-sm">🎓 Teacher-Student Room (<span id="teacher-chat-room-label">Subject</span>)</h4>
-            <p class="text-[11px] text-brand-200">Messages appear with a Verified Faculty badge</p>
-          </div>
-        </div>
-
-        <div id="teacher-chat-feed" class="flex-1 p-5 overflow-y-auto space-y-3 bg-slate-50"></div>
-
-        <form id="teacher-chat-form" class="p-3.5 bg-white border-t border-slate-200 flex items-center gap-2.5">
-          <input id="teacher-chat-input" type="text" required placeholder="Post an announcement or answer student doubts..."
-            class="flex-1 px-4 py-2.5 rounded-xl bg-slate-100 focus:bg-white border border-transparent focus:border-brand-500 outline-none text-sm" />
-          <button type="submit" class="px-5 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-sm transition">
-            Send as Teacher
-          </button>
+      <div class="bg-white rounded-3xl border border-slate-200 overflow-hidden flex flex-col h-[360px]">
+        <div class="px-4 py-3 bg-brand-900 text-white text-sm font-bold">🎓 Teacher-Student Room (<span id="tchat-lbl">Subject</span>)</div>
+        <div id="tchat-feed" class="flex-1 p-4 overflow-y-auto space-y-2 bg-slate-50"></div>
+        <form id="form-teacher-chat" class="p-3 border-t flex gap-2">
+          <input id="inp-teacher-chat" type="text" required placeholder="Reply as teacher..." class="flex-1 px-3 py-2 rounded-xl bg-slate-100 text-sm outline-none" />
+          <button type="submit" class="px-4 py-2 rounded-xl bg-slate-900 text-white text-xs font-bold">Send</button>
         </form>
       </div>
     </section>
   </main>
 
-  <!-- ===================================================================== -->
-  <!-- MODAL 1: DAILY PLANNER (BESIDE STOPWATCH IN TOP-RIGHT)                -->
-  <!-- ===================================================================== -->
-  <div id="modal-daily-planner" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
-    <div class="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-slate-200 flex flex-col max-h-[85vh]">
-      <div class="flex items-center justify-between pb-4 border-b border-slate-100">
-        <div class="flex items-center gap-2.5">
-          <span class="w-9 h-9 rounded-xl bg-amber-100 text-amber-800 flex items-center justify-center text-lg">📅</span>
-          <div>
-            <h3 class="font-extrabold text-slate-900 text-base">Today's Study Planner</h3>
-            <p class="text-xs text-slate-500">Organize your daily chapters, revisions & targets</p>
-          </div>
-        </div>
-        <button type="button" id="close-planner-x" class="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-600 font-bold">✕</button>
+  <!-- MODAL: DAILY PLANNER -->
+  <div id="mod-planner" class="hidden fixed inset-0 z-50 bg-slate-900/60 flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-md w-full p-5 shadow-xl">
+      <div class="flex justify-between items-center pb-3 border-b">
+        <h3 class="font-extrabold text-base">📅 Today's Study Planner</h3>
+        <button type="button" id="close-planner" class="w-7 h-7 rounded-full bg-slate-100 font-bold">✕</button>
       </div>
-
-      <form id="planner-add-form" class="mt-4 flex flex-col sm:flex-row gap-2">
-        <input id="planner-task-input" type="text" required placeholder="e.g., Revise Chapter 2 Formulas (45m)"
-          class="flex-1 px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm font-medium outline-none focus:border-brand-500" />
-        <button type="submit" class="px-4 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-700 text-white text-xs font-bold shrink-0">
-          + Add Goal
-        </button>
+      <form id="form-planner" class="mt-3 flex gap-2">
+        <input id="inp-planner" type="text" required placeholder="e.g. Revise Unit 1 Formulas" class="flex-1 px-3 py-2 rounded-xl border text-xs" />
+        <button type="submit" class="px-3 py-2 rounded-xl bg-brand-600 text-white text-xs font-bold">+ Add</button>
       </form>
-
-      <div id="planner-tasks-list" class="mt-4 flex-1 overflow-y-auto space-y-2 min-h-[150px]"></div>
-
-      <div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
-        <span id="planner-summary-text">0 of 0 tasks completed</span>
-        <button type="button" id="close-planner-done" class="px-4 py-2 rounded-xl bg-slate-900 text-white font-bold">Done</button>
-      </div>
+      <div id="planner-list" class="mt-3 max-h-60 overflow-y-auto space-y-2"></div>
     </div>
   </div>
 
-  <!-- ===================================================================== -->
-  <!-- MODAL 2: STUDENT PROFILE (TOP-RIGHT CORNER)                           -->
-  <!-- ===================================================================== -->
-  <div id="modal-student-profile" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
-    <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-200">
-      <div class="flex items-center justify-between mb-4">
-        <h3 class="font-extrabold text-slate-900 text-lg">Student Profile</h3>
-        <button type="button" id="close-profile-x" class="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-600 font-bold">✕</button>
+  <!-- MODAL: PROFILE -->
+  <div id="mod-profile" class="hidden fixed inset-0 z-50 bg-slate-900/60 flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-sm w-full p-5 shadow-xl space-y-4">
+      <div class="flex justify-between items-center">
+        <h3 class="font-extrabold text-base">Student Profile</h3>
+        <button type="button" id="close-profile" class="w-7 h-7 rounded-full bg-slate-100 font-bold">✕</button>
       </div>
-
-      <div class="flex items-center gap-3.5 p-4 rounded-2xl bg-slate-50 border border-slate-200 mb-4">
-        <div id="profile-modal-avatar" class="w-12 h-12 rounded-2xl bg-brand-600 text-white flex items-center justify-center text-lg font-extrabold shrink-0">S</div>
-        <div class="min-w-0">
-          <h4 id="profile-modal-name" class="font-extrabold text-slate-900 text-base truncate">Student</h4>
-          <p id="profile-modal-cohort" class="text-xs text-slate-600 truncate">Class / Branch / Year</p>
-          <span class="inline-block mt-1 px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-800 text-[10px] font-bold">Active Student</span>
-        </div>
+      <div class="p-3 rounded-2xl bg-slate-50 border">
+        <p id="prof-name" class="font-extrabold text-slate-900">Student</p>
+        <p id="prof-cohort" class="text-xs text-slate-500 mt-0.5">Section</p>
       </div>
-
-      <div class="grid grid-cols-3 gap-2.5 text-center mb-5">
-        <div class="p-3 rounded-xl bg-slate-50 border border-slate-100">
-          <p class="text-[11px] text-slate-500">Studied Today</p>
-          <p id="profile-modal-mins" class="font-extrabold text-slate-900 text-sm mt-0.5">0 mins</p>
-        </div>
-        <div class="p-3 rounded-xl bg-slate-50 border border-slate-100">
-          <p class="text-[11px] text-slate-500">Tests Taken</p>
-          <p id="profile-modal-tests" class="font-extrabold text-brand-600 text-sm mt-0.5">0</p>
-        </div>
-        <div class="p-3 rounded-xl bg-slate-50 border border-slate-100">
-          <p class="text-[11px] text-slate-500">Streak</p>
-          <p id="profile-modal-streak" class="font-extrabold text-amber-600 text-sm mt-0.5">0 Days</p>
-        </div>
+      <div class="grid grid-cols-3 gap-2 text-center text-xs">
+        <div class="p-2 rounded-xl bg-slate-50"><span class="text-slate-400 block">Today</span><strong id="prof-mins">0 mins</strong></div>
+        <div class="p-2 rounded-xl bg-slate-50"><span class="text-slate-400 block">Tests</span><strong id="prof-tests">0</strong></div>
+        <div class="p-2 rounded-xl bg-slate-50"><span class="text-slate-400 block">Streak</span><strong id="prof-streak">0 Days</strong></div>
       </div>
-
-      <div class="space-y-2">
-        <button type="button" id="profile-change-section-btn" class="w-full py-2.5 px-4 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xs transition">
-          🔄 Change Class / Branch / Section
-        </button>
-        <button type="button" id="profile-teacher-switch-btn" class="w-full py-2.5 px-4 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs transition">
-          🔐 Switch to Teacher Portal (Requires PIN)
-        </button>
-      </div>
+      <button type="button" id="prof-sec-btn" class="w-full py-2.5 rounded-xl bg-slate-100 font-bold text-xs">🔄 Change Section</button>
+      <button type="button" id="prof-tch-btn" class="w-full py-2.5 rounded-xl bg-slate-900 text-white font-bold text-xs">🔐 Switch to Teacher Portal</button>
     </div>
   </div>
 
-  <!-- ===================================================================== -->
-  <!-- MODAL 3: TEACHER PIN VERIFICATION                                     -->
-  <!-- ===================================================================== -->
-  <div id="modal-teacher-pin" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
-    <div class="bg-white rounded-3xl max-w-md w-full p-6 sm:p-8 shadow-2xl border border-slate-200">
-      <div class="w-12 h-12 rounded-2xl bg-amber-100 text-amber-700 flex items-center justify-center text-2xl mb-4">🔐</div>
-      <h3 class="text-xl font-extrabold text-slate-900">Teacher Portal Security PIN</h3>
-      <p class="text-xs sm:text-sm text-slate-500 mt-1">Only verified teachers with the PIN can upload study materials, start live classes, and analyze student study hours.</p>
-
-      <form id="teacher-pin-form" class="mt-5 space-y-4">
-        <div>
-          <label for="teacher-pin-input" class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1.5">Enter 4-Digit Teacher PIN</label>
-          <input id="teacher-pin-input" type="password" inputmode="numeric" maxlength="4" required placeholder="••••"
-            class="w-full px-4 py-3 rounded-xl border border-slate-300 focus:border-brand-600 focus:ring-2 focus:ring-brand-500/20 outline-none text-center font-mono text-2xl tracking-[0.5em]" />
-          <p class="text-[11px] text-slate-400 mt-2 text-center">Faculty PIN: <span class="font-mono font-bold text-slate-700">2026</span></p>
-        </div>
-
-        <div class="flex items-center gap-3 pt-2">
-          <button type="button" id="cancel-pin-btn" class="flex-1 py-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-sm transition">
-            Cancel
-          </button>
-          <button type="submit" class="flex-1 py-3 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-sm transition">
-            Unlock Portal
-          </button>
+  <!-- MODAL: TEACHER PIN -->
+  <div id="mod-pin" class="hidden fixed inset-0 z-50 bg-slate-900/60 flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-sm w-full p-6 shadow-xl">
+      <h3 class="text-lg font-extrabold text-slate-900">🔐 Teacher Security PIN</h3>
+      <p class="text-xs text-slate-500 mt-1">Enter PIN to upload materials & view student analytics (PIN: <strong>2026</strong>).</p>
+      <form id="form-pin" class="mt-4 space-y-3">
+        <input id="inp-pin" type="password" inputmode="numeric" maxlength="4" required placeholder="••••" class="w-full py-3 rounded-xl border text-center font-mono text-2xl tracking-[0.4em]" />
+        <div class="flex gap-2">
+          <button type="button" id="cancel-pin" class="flex-1 py-2.5 rounded-xl bg-slate-100 font-bold text-xs">Cancel</button>
+          <button type="submit" class="flex-1 py-2.5 rounded-xl bg-slate-900 text-white font-bold text-xs">Unlock</button>
         </div>
       </form>
     </div>
   </div>
 
-  <!-- ===================================================================== -->
-  <!-- MODAL 4: MATERIAL READER / TEST RUNNER / LIVE CLASSROOM               -->
-  <!-- ===================================================================== -->
-  <div id="modal-material-viewer" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
-    <div class="bg-white rounded-3xl max-w-2xl w-full max-h-[88vh] flex flex-col shadow-2xl border border-slate-200 overflow-hidden">
-      <div class="px-6 py-4 bg-slate-900 text-white flex items-center justify-between gap-2">
+  <!-- MODAL: VIEWER / QUIZ / LIVE -->
+  <div id="mod-viewer" class="hidden fixed inset-0 z-50 bg-slate-900/60 flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-2xl w-full max-h-[85vh] flex flex-col overflow-hidden shadow-2xl">
+      <div class="px-5 py-3.5 bg-slate-900 text-white flex justify-between items-center">
         <div class="min-w-0">
-          <span id="viewer-badge" class="px-2.5 py-0.5 rounded-full bg-brand-500 text-white text-[10px] font-bold uppercase">Material</span>
-          <h3 id="viewer-title" class="text-base sm:text-lg font-extrabold mt-1 truncate">Title</h3>
+          <span id="v-badge" class="text-[10px] uppercase font-bold text-indigo-300">Material</span>
+          <h3 id="v-title" class="font-extrabold text-sm sm:text-base truncate">Title</h3>
         </div>
-        <button type="button" id="close-viewer-x" class="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white font-bold shrink-0">✕</button>
+        <button type="button" id="close-viewer" class="w-8 h-8 rounded-full bg-white/10 font-bold">✕</button>
       </div>
-
-      <div id="viewer-body" class="p-6 overflow-y-auto space-y-4 text-sm text-slate-700 leading-relaxed flex-1"></div>
-
-      <div class="px-6 py-3.5 bg-slate-50 border-t border-slate-200 flex items-center justify-between">
-        <span id="viewer-meta" class="text-xs text-slate-500">Faculty Copy</span>
-        <button type="button" id="close-viewer-btn" class="px-5 py-2 rounded-xl bg-slate-900 text-white text-xs font-bold hover:bg-slate-800 transition">
-          Close
-        </button>
-      </div>
+      <div id="v-body" class="p-5 overflow-y-auto space-y-3 text-sm flex-1"></div>
     </div>
   </div>
 
-  <!-- ===================================================================== -->
-  <!-- COMPLETE APPLICATION SCRIPT (INSTANT INIT + LOCALSTORAGE SYNC)        -->
-  <!-- ===================================================================== -->
   <script>
     (function () {
-      "use strict";
+      const KEY = "edupulse_compact_v1";
+      const PIN = "2026";
+      const MAT_TYPES = ["All", "Books", "Notes", "Formula", "Short Notes", "Mindmaps", "PYQs", "Model Paper", "Tests"];
 
-      const STORAGE_KEY = "edupulse_cohort_portal_v2";
-      const TEACHER_PIN = "2026";
-      const MATERIAL_TYPES = ["All", "Books", "Notes", "Formula", "Short Notes", "Mindmaps", "PYQs", "Model Paper", "Tests"];
-
-      /**
-       * ACADEMIC DIRECTORY
-       * Class 9th, 10th, 11th, 12th (Maths, Bio, Commerce, Arts, Agriculture)
-       * and College (B.Tech, MBBS, B.Sc, B.Com, BBA, BA, B.Pharma, B.Ed, B.Sc Nursing)
-       * with all respective branches, departments, years, and subjects.
-       */
-      const ACADEMIC_DATA = {
+      const DATA = {
         "Class 9th": {
-          step2Label: "2. Select Foundation Track",
-          years: ["Regular Batch", "Olympiad Foundation"],
-          courses: {
-            "All Subjects (CBSE / State)": {
-              step3Label: "3. Select Section",
-              branches: {
-                "Section A (Science & Maths)": ["Mathematics", "Science", "Social Science", "English", "Information Technology"],
-                "Section B (Science & Maths)": ["Mathematics", "Science", "Social Science", "English", "Information Technology"]
-              }
-            }
-          }
+          years: ["Regular Batch", "Olympiad"],
+          courses: { "All Subjects": { branches: { "Section A": ["Mathematics", "Science", "Social Science", "English", "IT"], "Section B": ["Mathematics", "Science", "Social Science", "English", "IT"] } } }
         },
         "Class 10th": {
-          step2Label: "2. Select Board Track",
-          years: ["Board Batch", "NTSE Foundation"],
-          courses: {
-            "Board Core Subjects": {
-              step3Label: "3. Select Section",
-              branches: {
-                "Section A (Standard Maths)": ["Mathematics (Standard)", "Science", "Social Science", "English", "Computer Applications"],
-                "Section B (Basic Maths)": ["Mathematics (Basic)", "Science", "Social Science", "English", "Computer Applications"]
-              }
-            }
-          }
+          years: ["Board Batch", "NTSE"],
+          courses: { "Board Core": { branches: { "Section A (Standard)": ["Mathematics", "Science", "Social Science", "English", "Computer"], "Section B (Basic)": ["Mathematics", "Science", "Social Science", "English", "Computer"] } } }
         },
         "Class 11th": {
-          step2Label: "2. Select Stream (Maths, Bio, Commerce, Arts, Agriculture)",
           years: ["Class 11th"],
           courses: {
-            "Maths (PCM)": {
-              step3Label: "3. Select Section / Group",
-              branches: {
-                "PCM + Computer Science": ["Physics", "Chemistry", "Mathematics", "Computer Science", "English"],
-                "PCM + Physical Education": ["Physics", "Chemistry", "Mathematics", "Physical Education", "English"]
-              }
-            },
-            "Bio (PCB)": {
-              step3Label: "3. Select Section / Group",
-              branches: {
-                "PCB + Biotechnology": ["Physics", "Chemistry", "Biology", "Biotechnology", "English"],
-                "PCMB (Maths + Bio)": ["Physics", "Chemistry", "Biology", "Mathematics", "English"]
-              }
-            },
-            "Commerce": {
-              step3Label: "3. Select Section / Group",
-              branches: {
-                "Commerce + Applied Maths": ["Accountancy", "Business Studies", "Economics", "Applied Mathematics", "English"],
-                "Commerce + Informatics": ["Accountancy", "Business Studies", "Economics", "Informatics Practices", "English"]
-              }
-            },
-            "Arts / Humanities": {
-              step3Label: "3. Select Section / Group",
-              branches: {
-                "Humanities Core": ["History", "Political Science", "Geography", "Economics", "Psychology"]
-              }
-            },
-            "Agriculture": {
-              step3Label: "3. Select Section / Group",
-              branches: {
-                "Agricultural Sciences": ["Agronomy", "Horticulture", "Soil Science", "Agricultural Chemistry", "Animal Husbandry"]
-              }
-            }
+            "Maths (PCM)": { branches: { "PCM + CS": ["Physics", "Chemistry", "Mathematics", "Computer Science", "English"], "PCM + PE": ["Physics", "Chemistry", "Mathematics", "Physical Education", "English"] } },
+            "Bio (PCB)": { branches: { "PCB Core": ["Physics", "Chemistry", "Biology", "English"], "PCMB": ["Physics", "Chemistry", "Biology", "Mathematics", "English"] } },
+            "Commerce": { branches: { "Commerce + Maths": ["Accountancy", "Business Studies", "Economics", "Applied Maths", "English"], "Commerce + IP": ["Accountancy", "Business Studies", "Economics", "Informatics Practices", "English"] } },
+            "Arts / Humanities": { branches: { "Humanities": ["History", "Political Science", "Geography", "Economics", "Psychology"] } },
+            "Agriculture": { branches: { "Agri Science": ["Agronomy", "Horticulture", "Soil Science", "Agri Chemistry", "Animal Husbandry"] } }
           }
         },
         "Class 12th": {
-          step2Label: "2. Select Stream (Maths, Bio, Commerce, Arts, Agriculture)",
           years: ["Class 12th"],
           courses: {
-            "Maths (PCM)": {
-              step3Label: "3. Select Section / Track",
-              branches: {
-                "PCM + JEE / Board Section": ["Physics", "Chemistry", "Mathematics", "Computer Science", "English"]
-              }
-            },
-            "Bio (PCB)": {
-              step3Label: "3. Select Section / Track",
-              branches: {
-                "PCB + NEET / Board Section": ["Physics", "Chemistry", "Biology", "English", "Physical Education"]
-              }
-            },
-            "Commerce": {
-              step3Label: "3. Select Section / Track",
-              branches: {
-                "Commerce + CUET Section": ["Accountancy", "Business Studies", "Economics", "Applied Mathematics", "English"]
-              }
-            },
-            "Arts / Humanities": {
-              step3Label: "3. Select Section / Track",
-              branches: {
-                "Humanities + CUET Section": ["History", "Political Science", "Economics", "Sociology", "Psychology"]
-              }
-            },
-            "Agriculture": {
-              step3Label: "3. Select Section / Track",
-              branches: {
-                "Senior Secondary Agriculture": ["Crop Production", "Horticulture", "Agricultural Biology", "Soil & Water Conservation", "Agri Economics"]
-              }
-            }
+            "Maths (PCM)": { branches: { "PCM Board/JEE": ["Physics", "Chemistry", "Mathematics", "Computer Science", "English"] } },
+            "Bio (PCB)": { branches: { "PCB Board/NEET": ["Physics", "Chemistry", "Biology", "English"] } },
+            "Commerce": { branches: { "Commerce Board": ["Accountancy", "Business Studies", "Economics", "Applied Maths", "English"] } },
+            "Arts / Humanities": { branches: { "Humanities Board": ["History", "Political Science", "Economics", "Sociology", "Psychology"] } },
+            "Agriculture": { branches: { "Agri Senior Sec": ["Crop Production", "Horticulture", "Agri Biology", "Agri Economics"] } }
           }
         },
         "College": {
-          step2Label: "2. Select Degree Course",
           years: ["1st Year", "2nd Year", "3rd Year", "4th Year"],
           courses: {
             "B.Tech": {
-              step3Label: "3. Select Engineering Branch / Department",
               branches: {
-                "Computer Science & Engg (CSE)": ["Data Structures & Algorithms", "Operating Systems", "Database Management (DBMS)", "Computer Networks", "Artificial Intelligence"],
-                "Information Technology (IT)": ["Web Engineering", "Software Engineering", "Cloud Computing", "Cyber Security", "Data Mining"],
-                "Electronics & Comm. (ECE)": ["Analog & Digital Circuits", "Signals & Systems", "Microprocessors", "VLSI Design", "Control Systems"],
-                "Electrical Engineering (EE)": ["Power Systems", "Electrical Machines", "Power Electronics", "Network Theory", "Electromagnetics"],
-                "Mechanical Engineering (ME)": ["Thermodynamics", "Fluid Mechanics", "Strength of Materials", "Theory of Machines", "Manufacturing Processes"],
-                "Civil Engineering (CE)": ["Structural Analysis", "Geotechnical Engineering", "Surveying", "Transportation Engineering", "Environmental Engg"],
-                "AI & Data Science": ["Machine Learning", "Deep Learning", "Statistical Modeling", "Natural Language Processing", "Big Data Analytics"]
+                "CSE": ["Data Structures", "Operating Systems", "DBMS", "Computer Networks", "AI"],
+                "IT": ["Web Engineering", "Software Engg", "Cloud Computing", "Cyber Security"],
+                "ECE": ["Digital Circuits", "Signals & Systems", "Microprocessors", "VLSI"],
+                "EE": ["Power Systems", "Electrical Machines", "Power Electronics", "Network Theory"],
+                "ME": ["Thermodynamics", "Fluid Mechanics", "Strength of Materials", "Manufacturing"],
+                "CE": ["Structural Analysis", "Geotechnical Engg", "Surveying", "Transportation"],
+                "AI & Data Science": ["Machine Learning", "Deep Learning", "Statistics", "NLP"]
               }
             },
-            "MBBS": {
-              step3Label: "3. Select Medical Department / Phase",
-              branches: {
-                "Pre-Clinical Phase": ["Human Anatomy", "Medical Physiology", "Biochemistry"],
-                "Para-Clinical Phase": ["Pathology", "Pharmacology", "Microbiology", "Forensic Medicine"],
-                "Clinical Phase": ["General Medicine", "General Surgery", "Pediatrics", "Obstetrics & Gynecology"]
-              }
-            },
-            "B.Sc": {
-              step3Label: "3. Select Science Department",
-              branches: {
-                "Physics Honours": ["Quantum Mechanics", "Classical Mechanics", "Electrodynamics", "Solid State Physics"],
-                "Chemistry Honours": ["Organic Chemistry", "Inorganic Chemistry", "Physical Chemistry", "Analytical Techniques"],
-                "Mathematics Honours": ["Real Analysis", "Linear Algebra", "Differential Equations", "Abstract Algebra"],
-                "Biotechnology & Zoology": ["Cell & Molecular Biology", "Genetics", "Immunology", "Ecology & Evolution"],
-                "Computer Science": ["C++ & Java Programming", "Discrete Mathematics", "Database Systems", "Web Development"]
-              }
-            },
-            "B.Com": {
-              step3Label: "3. Select Commerce Department",
-              branches: {
-                "Accounting & Finance": ["Financial Accounting", "Corporate Accounting", "Cost & Management Accounting", "Auditing"],
-                "Banking & Insurance": ["Banking Law & Practice", "Financial Markets", "Insurance Risk Management"],
-                "Taxation & Corporate Law": ["Income Tax Law", "GST & Indirect Taxes", "Business Regulatory Framework"]
-              }
-            },
-            "BBA": {
-              step3Label: "3. Select Management Department",
-              branches: {
-                "Finance Management": ["Corporate Finance", "Investment & Portfolio Mgmt", "Financial Statement Analysis"],
-                "Marketing Management": ["Marketing Principles", "Consumer Behavior", "Digital & Brand Marketing"],
-                "Human Resource (HR)": ["Organizational Behavior", "Talent Management", "Industrial Relations"]
-              }
-            },
-            "BA": {
-              step3Label: "3. Select Arts Department",
-              branches: {
-                "History & Archaeology": ["Ancient Indian History", "Medieval World", "Modern Indian History"],
-                "Political Science": ["Political Theory", "Indian Constitution", "International Relations"],
-                "Economics": ["Microeconomics", "Macroeconomics", "Indian Economic Development", "Econometrics"],
-                "Psychology": ["Cognitive Psychology", "Developmental Psychology", "Clinical & Social Psychology"]
-              }
-            },
-            "B.Pharma": {
-              step3Label: "3. Select Pharmacy Department",
-              branches: {
-                "Pharmaceutics": ["Physical Pharmaceutics", "Pharmaceutical Engineering", "Biopharmaceutics"],
-                "Pharmacology": ["Human Anatomy & Physiology", "Pathophysiology", "Clinical Pharmacology"],
-                "Pharmaceutical Chemistry": ["Medicinal Chemistry", "Pharmaceutical Analysis", "Organic Chemistry"]
-              }
-            },
-            "B.Ed": {
-              step3Label: "3. Select Pedagogy Department",
-              branches: {
-                "Pedagogy of Science & Maths": ["Teaching of Physical Science", "Teaching of Mathematics", "Childhood & Growing Up"],
-                "Pedagogy of Social Science & Lang": ["Teaching of Social Studies", "Teaching of English", "Assessment for Learning"]
-              }
-            },
-            "B.Sc Nursing": {
-              step3Label: "3. Select Nursing Department",
-              branches: {
-                "Medical-Surgical Nursing": ["Adult Health Nursing", "Anatomy & Physiology", "Applied Nutrition & Pharmacology"],
-                "Community & Child Health": ["Pediatric Nursing", "Community Health Nursing", "Midwifery & Obstetrical Nursing"]
-              }
-            }
+            "MBBS": { branches: { "Pre-Clinical": ["Anatomy", "Physiology", "Biochemistry"], "Para-Clinical": ["Pathology", "Pharmacology", "Microbiology"], "Clinical": ["General Medicine", "Surgery", "Pediatrics"] } },
+            "B.Sc": { branches: { "Physics Hons": ["Quantum Mechanics", "Electrodynamics", "Solid State"], "Chemistry Hons": ["Organic", "Inorganic", "Physical Chemistry"], "Maths Hons": ["Real Analysis", "Linear Algebra", "Differential Eq"], "Biotech": ["Molecular Biology", "Genetics", "Immunology"] } },
+            "B.Com": { branches: { "Accounting & Finance": ["Financial Accounting", "Corporate Accounting", "Auditing"], "Taxation": ["Income Tax", "GST", "Business Law"] } },
+            "BBA": { branches: { "Finance": ["Corporate Finance", "Investment Mgmt"], "Marketing": ["Marketing Principles", "Digital Marketing"], "HR": ["Organizational Behavior", "Talent Mgmt"] } },
+            "BA": { branches: { "History": ["Ancient India", "Modern India"], "Political Science": ["Political Theory", "Indian Constitution"], "Economics": ["Microeconomics", "Macroeconomics"], "Psychology": ["Cognitive Psych", "Clinical Psych"] } },
+            "B.Pharma": { branches: { "Pharmaceutics": ["Physical Pharmaceutics", "Biopharmaceutics"], "Pharmacology": ["Pathophysiology", "Clinical Pharmacology"] } },
+            "B.Ed": { branches: { "Science & Maths Pedagogy": ["Physical Science", "Mathematics Teaching"], "Arts Pedagogy": ["Social Studies", "English Teaching"] } },
+            "B.Sc Nursing": { branches: { "Medical-Surgical": ["Adult Health Nursing", "Anatomy & Physiology"], "Community Health": ["Pediatric Nursing", "Midwifery"] } }
           }
         }
       };
 
-      // Default Zero-Initialized Application State
-      const state = {
-        hasJoinedSection: false,
-        studentName: "",
-        selectedLevel: "",
-        selectedCourse: "",
-        selectedBranch: "",
-        selectedYear: "",
-        activeSubject: "",
-        activeStudentTab: "materials",
-        activeMaterialFilter: "All",
-        activeDiscussionRoom: "students_only",
-        isTeacherAuthenticated: false,
-
-        timerRunning: false,
-        timerSeconds: 0,
-        timerInterval: null,
-        todayStudyMinutes: 0,
-        streakDays: 0,
-        testsCompleted: 0,
-        totalTestScorePercent: 0,
-        subjectMinutes: {},
-
-        plannerTasks: [],
-        uploadedMaterials: [],
-        liveClasses: [],
-        quizBuilderCount: 0,
-
-        messages: {
-          students_only: {},
-          teacher_student: {},
-          all_department: {}
-        },
-
-        checkedInStudents: []
+      const S = {
+        joined: false, name: "", level: "", course: "", branch: "", year: "", subj: "",
+        tab: "materials", filter: "All", room: "students_only", teacherAuth: false,
+        running: false, secs: 0, iv: null, minsToday: 0, streak: 0, tests: 0, scoreSum: 0,
+        subjMins: {}, tasks: [], materials: [], lives: [], qCount: 0,
+        msgs: { students_only: {}, teacher_student: {}, all_department: {} }, students: []
       };
 
-      // =====================================================================
-      // LOCALSTORAGE PERSISTENCE & URL SYNC
-      // =====================================================================
-      function savePersistentData() {
+      const $ = id => document.getElementById(id);
+      const esc = s => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+
+      function toast(msg, ok = true) {
+        const d = document.createElement("div");
+        d.className = `pointer-events-auto px-4 py-2.5 rounded-xl text-xs font-bold text-white shadow-lg ${ok ? "bg-slate-900" : "bg-rose-700"}`;
+        d.textContent = msg;
+        $("toast-box").appendChild(d);
+        setTimeout(() => d.remove(), 3500);
+      }
+
+      function save() {
         try {
-          const payload = {
-            hasJoinedSection: state.hasJoinedSection,
-            studentName: state.studentName,
-            selectedLevel: state.selectedLevel,
-            selectedCourse: state.selectedCourse,
-            selectedBranch: state.selectedBranch,
-            selectedYear: state.selectedYear,
-            activeSubject: state.activeSubject,
-            todayStudyMinutes: state.todayStudyMinutes,
-            streakDays: state.streakDays,
-            testsCompleted: state.testsCompleted,
-            totalTestScorePercent: state.totalTestScorePercent,
-            subjectMinutes: state.subjectMinutes,
-            plannerTasks: state.plannerTasks,
-            uploadedMaterials: state.uploadedMaterials,
-            liveClasses: state.liveClasses,
-            messages: state.messages,
-            checkedInStudents: state.checkedInStudents
-          };
-          localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
-        } catch (err) {
-          // Handle quota exceeded gracefully (e.g., if large file attached)
-          showToast("Storage limit reached. Try attaching smaller files (< 1MB).", "error");
-        }
+          const { iv, running, ...rest } = S;
+          localStorage.setItem(KEY, JSON.stringify(rest));
+        } catch (e) { toast("Storage full! Use smaller files.", false); }
       }
 
-      function loadPersistentData() {
+      function load() {
         try {
-          const raw = localStorage.getItem(STORAGE_KEY);
-          if (!raw) return;
-          const saved = JSON.parse(raw);
-          if (!saved || typeof saved !== "object") return;
-
-          state.hasJoinedSection = Boolean(saved.hasJoinedSection);
-          state.studentName = saved.studentName || "";
-          state.selectedLevel = saved.selectedLevel || "";
-          state.selectedCourse = saved.selectedCourse || "";
-          state.selectedBranch = saved.selectedBranch || "";
-          state.selectedYear = saved.selectedYear || "";
-          state.activeSubject = saved.activeSubject || "";
-          state.todayStudyMinutes = Number(saved.todayStudyMinutes) || 0;
-          state.streakDays = Number(saved.streakDays) || 0;
-          state.testsCompleted = Number(saved.testsCompleted) || 0;
-          state.totalTestScorePercent = Number(saved.totalTestScorePercent) || 0;
-          state.subjectMinutes = saved.subjectMinutes || {};
-          state.plannerTasks = Array.isArray(saved.plannerTasks) ? saved.plannerTasks : [];
-          state.uploadedMaterials = Array.isArray(saved.uploadedMaterials) ? saved.uploadedMaterials : [];
-          state.liveClasses = Array.isArray(saved.liveClasses) ? saved.liveClasses : [];
-          state.messages = saved.messages || { students_only: {}, teacher_student: {}, all_department: {} };
-          state.checkedInStudents = Array.isArray(saved.checkedInStudents) ? saved.checkedInStudents : [];
-        } catch (err) {
-          console.warn("Could not read saved state:", err);
-        }
-      }
-
-      function importSyncPayloadFromUrl() {
-        try {
-          const hash = window.location.hash;
-          if (!hash || !hash.startsWith("#sync=")) return;
-          const encoded = hash.slice(6);
-          const decodedJson = decodeURIComponent(escape(atob(encoded)));
-          const syncObj = JSON.parse(decodedJson);
-
-          if (Array.isArray(syncObj.uploadedMaterials)) {
-            const existingIds = new Set(state.uploadedMaterials.map(m => m.id));
-            syncObj.uploadedMaterials.forEach(item => {
-              if (!existingIds.has(item.id)) {
-                state.uploadedMaterials.unshift(item);
-              }
-            });
+          const raw = localStorage.getItem(KEY);
+          if (raw) Object.assign(S, JSON.parse(raw));
+          if (location.hash.startsWith("#sync=")) {
+            const sync = JSON.parse(decodeURIComponent(escape(atob(location.hash.slice(6)))));
+            (sync.materials || []).forEach(m => { if (!S.materials.some(x => x.id === m.id)) S.materials.unshift(m); });
+            (sync.lives || []).forEach(l => { if (!S.lives.some(x => x.id === l.id)) S.lives.unshift(l); });
+            save();
+            history.replaceState(null, "", location.pathname);
+            toast("Teacher materials synced!");
           }
-          if (Array.isArray(syncObj.liveClasses)) {
-            const existingLiveIds = new Set(state.liveClasses.map(l => l.id));
-            syncObj.liveClasses.forEach(lc => {
-              if (!existingLiveIds.has(lc.id)) {
-                state.liveClasses.unshift(lc);
-              }
-            });
-          }
-          savePersistentData();
-          history.replaceState(null, "", window.location.pathname + window.location.search);
-          showToast("Synced latest materials & live classes from teacher link!", "success");
-        } catch (err) {
-          console.warn("Sync link parse skipped:", err);
+        } catch (e) {}
+      }
+
+      // WIZARD
+      function renderWizard() {
+        const box = $("wiz-levels");
+        box.innerHTML = "";
+        Object.keys(DATA).forEach(lvl => {
+          const b = document.createElement("button");
+          b.type = "button";
+          b.className = `py-2.5 px-2 rounded-xl border-2 text-xs font-bold ${S.level === lvl ? "border-brand-600 bg-brand-50 text-brand-700" : "border-slate-200 bg-white"}`;
+          b.textContent = lvl;
+          b.onclick = () => pickLevel(lvl);
+          box.appendChild(b);
+        });
+        updateWizBtn();
+      }
+
+      function pickLevel(lvl) {
+        S.level = lvl; S.course = ""; S.branch = ""; S.year = "";
+        renderWizard();
+        $("wiz-step2").classList.remove("hidden");
+        $("wiz-step3").classList.add("hidden");
+        $("wiz-step4").classList.add("hidden");
+        $("wiz-subjects-box").classList.add("hidden");
+        const box = $("wiz-courses"); box.innerHTML = "";
+        const keys = Object.keys(DATA[lvl].courses);
+        keys.forEach(c => {
+          const b = document.createElement("button");
+          b.type = "button";
+          b.className = "c-btn py-2.5 px-3 rounded-xl border-2 border-slate-200 text-xs font-bold text-left";
+          b.dataset.v = c; b.textContent = c;
+          b.onclick = () => pickCourse(c);
+          box.appendChild(b);
+        });
+        if (keys.length === 1) pickCourse(keys[0]);
+      }
+
+      function pickCourse(c) {
+        S.course = c; S.branch = ""; S.year = "";
+        document.querySelectorAll(".c-btn").forEach(b => b.className = `c-btn py-2.5 px-3 rounded-xl border-2 text-xs font-bold text-left ${b.dataset.v === c ? "border-brand-600 bg-brand-50 text-brand-700" : "border-slate-200"}`);
+        $("wiz-step3").classList.remove("hidden");
+        $("wiz-step4").classList.add("hidden");
+        $("wiz-subjects-box").classList.add("hidden");
+        const box = $("wiz-branches"); box.innerHTML = "";
+        const keys = Object.keys(DATA[S.level].courses[c].branches);
+        keys.forEach(br => {
+          const b = document.createElement("button");
+          b.type = "button";
+          b.className = "b-btn py-2.5 px-3 rounded-xl border-2 border-slate-200 text-xs font-bold text-left";
+          b.dataset.v = br; b.textContent = br;
+          b.onclick = () => pickBranch(br);
+          box.appendChild(b);
+        });
+        if (keys.length === 1) pickBranch(keys[0]);
+      }
+
+      function pickBranch(br) {
+        S.branch = br; S.year = "";
+        document.querySelectorAll(".b-btn").forEach(b => b.className = `b-btn py-2.5 px-3 rounded-xl border-2 text-xs font-bold text-left ${b.dataset.v === br ? "border-brand-600 bg-brand-50 text-brand-700" : "border-slate-200"}`);
+        $("wiz-step4").classList.remove("hidden");
+        const box = $("wiz-years"); box.innerHTML = "";
+        const yrs = DATA[S.level].years;
+        yrs.forEach(y => {
+          const b = document.createElement("button");
+          b.type = "button";
+          b.className = "y-btn py-2.5 px-3 rounded-xl border-2 border-slate-200 text-xs font-bold";
+          b.dataset.v = y; b.textContent = y;
+          b.onclick = () => pickYear(y);
+          box.appendChild(b);
+        });
+        if (yrs.length === 1) pickYear(yrs[0]);
+      }
+
+      function pickYear(y) {
+        S.year = y;
+        document.querySelectorAll(".y-btn").forEach(b => b.className = `y-btn py-2.5 px-3 rounded-xl border-2 text-xs font-bold ${b.dataset.v === y ? "border-brand-600 bg-brand-50 text-brand-700" : "border-slate-200"}`);
+        const subs = DATA[S.level].courses[S.course].branches[S.branch];
+        $("wiz-subjects-box").classList.remove("hidden");
+        $("wiz-subject-pills").innerHTML = subs.map(s => `<span class="px-2.5 py-1 rounded-full bg-white border text-xs font-semibold">${esc(s)}</span>`).join("");
+        updateWizBtn();
+      }
+
+      function updateWizBtn() {
+        const step = S.year ? 4 : S.branch ? 3 : S.course ? 2 : 1;
+        $("wiz-badge").textContent = `Step ${step}/4`;
+        $("btn-enter-workspace").disabled = !(S.level && S.course && S.branch && S.year);
+      }
+
+      function openWorkspace(silent = false) {
+        const subs = DATA[S.level].courses[S.course].branches[S.branch];
+        if (!S.subj || !subs.includes(S.subj)) S.subj = subs[0];
+        subs.forEach(s => { if (typeof S.subjMins[s] !== "number") S.subjMins[s] = 0; });
+
+        const cohort = `${S.level} • ${S.course} • ${S.branch} (${S.year})`;
+        if (!S.students.some(st => st.name === S.name)) {
+          S.students.push({ name: S.name, cohort, mins: S.minsToday, tests: S.tests, avg: 0 });
         }
+        save();
+
+        $("top-avatar").textContent = (S.name[0] || "S").toUpperCase();
+        $("top-name").textContent = S.name;
+        $("hdr-sub").textContent = cohort;
+        $("dash-cohort-title").textContent = cohort;
+        $("lbl-dept").textContent = `${S.course} (${S.branch})`;
+        $("topbar-tools").classList.remove("hidden");
+        $("topbar-tools").classList.add("flex");
+
+        $("view-wizard").classList.add("hidden");
+        $("view-teacher").classList.add("hidden");
+        $("view-student").classList.remove("hidden");
+
+        renderSubjTabs(); renderFilters(); renderMaterials(); renderLives(); renderTracker(); switchRoom(S.room); updatePlannerBadge();
+        if (!silent) toast(`Welcome ${S.name}!`);
       }
 
-      function copyTeacherSyncLink() {
-        try {
-          // Exclude heavy binary data URLs from URL hash so link stays compact
-          const compactMaterials = state.uploadedMaterials.map(m => ({
-            ...m,
-            fileUrl: null,
-            fileName: m.fileName ? `${m.fileName} (Ask faculty for file)` : null
-          }));
-          const syncPayload = {
-            uploadedMaterials: compactMaterials,
-            liveClasses: state.liveClasses
-          };
-          const jsonStr = JSON.stringify(syncPayload);
-          const encoded = btoa(unescape(encodeURIComponent(jsonStr)));
-          const baseUrl = window.location.href.split("#")[0];
-          const fullUrl = `${baseUrl}#sync=${encoded}`;
-
-          if (navigator.clipboard && navigator.clipboard.writeText) {
-            navigator.clipboard.writeText(fullUrl).then(() => {
-              showToast("Student Sync Link copied! Share it so students on any device get your uploads.", "success");
-            }).catch(() => {
-              prompt("Copy this Student Sync Link:", fullUrl);
-            });
-          } else {
-            prompt("Copy this Student Sync Link:", fullUrl);
-          }
-        } catch (err) {
-          showToast("Could not generate sync link.", "error");
-        }
-      }
-
-      function resetAllPortalData() {
-        localStorage.removeItem(STORAGE_KEY);
-        window.location.reload();
-      }
-
-      // =====================================================================
-      // UTILITIES
-      // =====================================================================
-      function showToast(message, type = "info") {
-        const container = document.getElementById("toast-container");
-        if (!container) return;
-        const toast = document.createElement("div");
-        const styles = {
-          success: "bg-emerald-900 text-white border-emerald-700",
-          error: "bg-rose-900 text-white border-rose-700",
-          info: "bg-slate-900 text-white border-slate-700"
-        };
-        toast.className = `pointer-events-auto px-4 py-3 rounded-2xl border shadow-lg text-xs sm:text-sm font-semibold flex items-center justify-between gap-3 transition-all ${styles[type] || styles.info}`;
-        const span = document.createElement("span");
-        span.textContent = message;
-        const closeBtn = document.createElement("button");
-        closeBtn.type = "button";
-        closeBtn.className = "text-white/70 hover:text-white font-bold";
-        closeBtn.textContent = "✕";
-        closeBtn.addEventListener("click", () => toast.remove());
-        toast.append(span, closeBtn);
-        container.appendChild(toast);
-        setTimeout(() => {
-          if (toast.parentElement) toast.remove();
-        }, 4200);
-      }
-
-      function escapeHtml(str) {
-        return String(str)
-          .replace(/&/g, "&amp;")
-          .replace(/</g, "&lt;")
-          .replace(/>/g, "&gt;")
-          .replace(/"/g, "&quot;")
-          .replace(/'/g, "&#039;");
-      }
-
-      function getActiveSubjectRoomKey() {
-        return `${state.selectedLevel}|${state.selectedCourse}|${state.selectedBranch}|${state.selectedYear}|${state.activeSubject}`;
-      }
-
-      function getActiveDepartmentRoomKey() {
-        return `${state.selectedLevel}|${state.selectedCourse}|${state.selectedBranch}`;
-      }
-
-      // =====================================================================
-      // VIEW 1: SECTION SELECTION WIZARD
-      // =====================================================================
-      function renderSectionWizard() {
-        const levelContainer = document.getElementById("level-options");
-        levelContainer.innerHTML = "";
-
-        Object.keys(ACADEMIC_DATA).forEach(level => {
-          const active = state.selectedLevel === level;
-          const btn = document.createElement("button");
-          btn.type = "button";
-          btn.className = `py-3 px-3 rounded-2xl border-2 text-xs sm:text-sm font-bold transition ${
-            active ? "border-brand-600 bg-brand-50 text-brand-700" : "border-slate-200 bg-white text-slate-700 hover:border-brand-300"
-          }`;
-          btn.textContent = level;
-          btn.addEventListener("click", () => selectLevel(level));
-          levelContainer.appendChild(btn);
+      // STUDENT WORKSPACE
+      function renderSubjTabs() {
+        const subs = DATA[S.level].courses[S.course].branches[S.branch];
+        const box = $("subject-tabs"); box.innerHTML = "";
+        subs.forEach(sub => {
+          const b = document.createElement("button");
+          b.type = "button";
+          b.className = `px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap ${S.subj === sub ? "bg-slate-900 text-white" : "bg-slate-100 text-slate-600"}`;
+          b.textContent = sub;
+          b.onclick = () => { S.subj = sub; save(); renderSubjTabs(); renderMaterials(); renderLives(); renderChat(); };
+          box.appendChild(b);
         });
-
-        updateWizardProgress();
+        document.querySelectorAll(".lbl-subj").forEach(el => el.textContent = S.subj);
       }
 
-      function selectLevel(level) {
-        state.selectedLevel = level;
-        state.selectedCourse = "";
-        state.selectedBranch = "";
-        state.selectedYear = "";
-
-        renderSectionWizard();
-
-        const levelObj = ACADEMIC_DATA[level];
-        const step2 = document.getElementById("step-2-container");
-        const courseContainer = document.getElementById("course-options");
-        document.getElementById("step-2-label").textContent = levelObj.step2Label;
-
-        step2.classList.remove("hidden");
-        document.getElementById("step-3-container").classList.add("hidden");
-        document.getElementById("step-4-container").classList.add("hidden");
-        document.getElementById("subject-preview-box").classList.add("hidden");
-
-        courseContainer.innerHTML = "";
-        const courses = Object.keys(levelObj.courses);
-        courses.forEach(course => {
-          const btn = document.createElement("button");
-          btn.type = "button";
-          btn.dataset.course = course;
-          btn.className = "course-opt-btn py-3 px-3.5 rounded-2xl border-2 border-slate-200 bg-white text-slate-700 hover:border-brand-300 text-xs sm:text-sm font-bold text-left transition";
-          btn.textContent = course;
-          btn.addEventListener("click", () => selectCourse(course));
-          courseContainer.appendChild(btn);
+      function switchTab(t) {
+        S.tab = t;
+        ["materials", "live", "tracker", "rooms"].forEach(k => {
+          $(`sec-${k}`).classList.toggle("hidden", k !== t);
+          $(`nav-${k}`).className = `bnav-btn flex flex-col sm:flex-row items-center justify-center gap-1 py-2 rounded-xl text-[10px] sm:text-xs ${k === t ? "bg-brand-50 text-brand-700 font-extrabold" : "text-slate-600 font-bold"}`;
         });
-
-        if (courses.length === 1) {
-          selectCourse(courses[0]);
-        } else {
-          updateWizardProgress();
-        }
+        if (t === "materials") renderMaterials();
+        if (t === "live") renderLives();
+        if (t === "tracker") renderTracker();
+        if (t === "rooms") renderChat();
       }
 
-      function selectCourse(course) {
-        state.selectedCourse = course;
-        state.selectedBranch = "";
-        state.selectedYear = "";
-
-        document.querySelectorAll(".course-opt-btn").forEach(btn => {
-          const isSelected = btn.dataset.course === course;
-          btn.className = `course-opt-btn py-3 px-3.5 rounded-2xl border-2 text-xs sm:text-sm font-bold text-left transition ${
-            isSelected ? "border-brand-600 bg-brand-50 text-brand-700" : "border-slate-200 bg-white text-slate-700 hover:border-brand-300"
-          }`;
-        });
-
-        const courseObj = ACADEMIC_DATA[state.selectedLevel].courses[course];
-        const step3 = document.getElementById("step-3-container");
-        const branchContainer = document.getElementById("branch-options");
-        document.getElementById("step-3-label").textContent = courseObj.step3Label;
-
-        step3.classList.remove("hidden");
-        document.getElementById("step-4-container").classList.add("hidden");
-        document.getElementById("subject-preview-box").classList.add("hidden");
-
-        branchContainer.innerHTML = "";
-        const branches = Object.keys(courseObj.branches);
-        branches.forEach(branch => {
-          const btn = document.createElement("button");
-          btn.type = "button";
-          btn.dataset.branch = branch;
-          btn.className = "branch-opt-btn py-3 px-4 rounded-2xl border-2 border-slate-200 bg-white text-slate-700 hover:border-brand-300 text-xs sm:text-sm font-bold text-left transition";
-          btn.textContent = branch;
-          btn.addEventListener("click", () => selectBranch(branch));
-          branchContainer.appendChild(btn);
-        });
-
-        if (branches.length === 1) {
-          selectBranch(branches[0]);
-        } else {
-          updateWizardProgress();
-        }
-      }
-
-      function selectBranch(branch) {
-        state.selectedBranch = branch;
-        state.selectedYear = "";
-
-        document.querySelectorAll(".branch-opt-btn").forEach(btn => {
-          const isSelected = btn.dataset.branch === branch;
-          btn.className = `branch-opt-btn py-3 px-4 rounded-2xl border-2 text-xs sm:text-sm font-bold text-left transition ${
-            isSelected ? "border-brand-600 bg-brand-50 text-brand-700" : "border-slate-200 bg-white text-slate-700 hover:border-brand-300"
-          }`;
-        });
-
-        const years = ACADEMIC_DATA[state.selectedLevel].years;
-        const step4 = document.getElementById("step-4-container");
-        const yearContainer = document.getElementById("year-options");
-        step4.classList.remove("hidden");
-
-        yearContainer.innerHTML = "";
-        years.forEach(yr => {
-          const btn = document.createElement("button");
-          btn.type = "button";
-          btn.dataset.year = yr;
-          btn.className = "year-opt-btn py-3 px-3 rounded-2xl border-2 border-slate-200 bg-white text-slate-700 hover:border-brand-300 text-xs sm:text-sm font-bold transition";
-          btn.textContent = yr;
-          btn.addEventListener("click", () => selectYear(yr));
-          yearContainer.appendChild(btn);
-        });
-
-        if (years.length === 1) {
-          selectYear(years[0]);
-        } else {
-          updateWizardProgress();
-        }
-      }
-
-      function selectYear(year) {
-        state.selectedYear = year;
-
-        document.querySelectorAll(".year-opt-btn").forEach(btn => {
-          const isSelected = btn.dataset.year === year;
-          btn.className = `year-opt-btn py-3 px-3 rounded-2xl border-2 text-xs sm:text-sm font-bold transition ${
-            isSelected ? "border-brand-600 bg-brand-50 text-brand-700" : "border-slate-200 bg-white text-slate-700 hover:border-brand-300"
-          }`;
-        });
-
-        const subjects = ACADEMIC_DATA[state.selectedLevel].courses[state.selectedCourse].branches[state.selectedBranch] || [];
-        const previewBox = document.getElementById("subject-preview-box");
-        const previewPills = document.getElementById("subject-preview-pills");
-        previewBox.classList.remove("hidden");
-        previewPills.innerHTML = subjects.map(sub =>
-          `<span class="px-3 py-1 rounded-full bg-white border border-slate-200 text-xs font-semibold text-slate-700">${escapeHtml(sub)}</span>`
-        ).join("");
-
-        updateWizardProgress();
-      }
-
-      function updateWizardProgress() {
-        let step = 1;
-        if (state.selectedLevel) step = 2;
-        if (state.selectedCourse) step = 3;
-        if (state.selectedBranch) step = 4;
-        document.getElementById("wizard-step-badge").textContent = `Step ${step} of 4`;
-
-        const btn = document.getElementById("join-cohort-btn");
-        btn.disabled = !(state.selectedLevel && state.selectedCourse && state.selectedBranch && state.selectedYear);
-      }
-
-      function openStudentWorkspaceView(silent = false) {
-        const subjects = ACADEMIC_DATA[state.selectedLevel].courses[state.selectedCourse].branches[state.selectedBranch];
-        if (!state.activeSubject || !subjects.includes(state.activeSubject)) {
-          state.activeSubject = subjects[0];
-        }
-
-        subjects.forEach(sub => {
-          if (typeof state.subjectMinutes[sub] !== "number") {
-            state.subjectMinutes[sub] = 0;
-          }
-        });
-
-        const cohortLabel = `${state.selectedLevel} • ${state.selectedCourse} • ${state.selectedBranch} (${state.selectedYear})`;
-        const existingIdx = state.checkedInStudents.findIndex(s => s.name === state.studentName);
-        if (existingIdx === -1) {
-          state.checkedInStudents.push({
-            name: state.studentName,
-            cohort: cohortLabel,
-            minutesToday: state.todayStudyMinutes,
-            testsCompleted: state.testsCompleted,
-            avgScore: state.testsCompleted > 0 ? Math.round(state.totalTestScorePercent / state.testsCompleted) : 0
-          });
-        } else {
-          state.checkedInStudents[existingIdx].cohort = cohortLabel;
-        }
-
-        savePersistentData();
-
-        const initials = state.studentName.split(" ").map(p => p[0]).join("").toUpperCase().slice(0, 2) || "S";
-        document.getElementById("topbar-avatar-initials").textContent = initials;
-        document.getElementById("topbar-student-name").textContent = state.studentName;
-        document.getElementById("header-cohort-sub").textContent = cohortLabel;
-        document.getElementById("dashboard-cohort-heading").textContent = cohortLabel;
-        document.getElementById("dept-room-label").textContent = `${state.selectedCourse} — ${state.selectedBranch}`;
-
-        const topTools = document.getElementById("student-topbar-tools");
-        topTools.classList.remove("hidden");
-        topTools.classList.add("flex");
-
-        document.getElementById("view-section-select").classList.add("hidden");
-        document.getElementById("view-teacher-portal").classList.add("hidden");
-        document.getElementById("view-student-dashboard").classList.remove("hidden");
-
-        renderSubjectTabs();
-        renderMaterialFilterPills();
-        renderMaterialsList();
-        renderLiveClassesList();
-        renderStudyTrackerUI();
-        switchDiscussionRoom(state.activeDiscussionRoom);
-        updatePlannerBadge();
-
-        if (!silent) {
-          showToast(`Welcome, ${state.studentName}! Your study workspace is ready.`, "success");
-        }
-      }
-
-      function completeSectionSelection() {
-        const nameInput = document.getElementById("student-name-input").value.trim();
-        state.studentName = nameInput || state.studentName || "Student";
-        state.hasJoinedSection = true;
-        openStudentWorkspaceView(false);
-      }
-
-      function goToSectionSelection() {
-        document.getElementById("view-student-dashboard").classList.add("hidden");
-        document.getElementById("view-teacher-portal").classList.add("hidden");
-        document.getElementById("view-section-select").classList.remove("hidden");
-        if (state.studentName) {
-          document.getElementById("student-name-input").value = state.studentName;
-        }
-        renderSectionWizard();
-      }
-
-      // =====================================================================
-      // VIEW 2: STUDENT PERSONAL PAGE
-      // =====================================================================
-      function switchStudentTab(tabName) {
-        state.activeStudentTab = tabName;
-
-        ["materials", "live", "tracker", "rooms"].forEach(t => {
-          const sec = document.getElementById(`student-section-${t}`);
-          const navBtn = document.getElementById(`bottom-nav-${t}`);
-          if (t === tabName) {
-            sec.classList.remove("hidden");
-            navBtn.className = "bottom-nav-btn flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 py-2 px-1 sm:px-3 rounded-2xl bg-brand-50 text-brand-700 font-extrabold transition";
-          } else {
-            sec.classList.add("hidden");
-            navBtn.className = "bottom-nav-btn flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 py-2 px-1 sm:px-3 rounded-2xl text-slate-600 hover:bg-slate-100 font-bold transition";
-          }
-        });
-
-        if (tabName === "materials") renderMaterialsList();
-        if (tabName === "live") renderLiveClassesList();
-        if (tabName === "tracker") renderStudyTrackerUI();
-        if (tabName === "rooms") renderDiscussionFeed();
-      }
-
-      function renderSubjectTabs() {
-        const subjects = ACADEMIC_DATA[state.selectedLevel].courses[state.selectedCourse].branches[state.selectedBranch] || [];
-        const container = document.getElementById("subject-room-tabs");
-        container.innerHTML = "";
-
-        subjects.forEach(sub => {
-          const active = state.activeSubject === sub;
-          const btn = document.createElement("button");
-          btn.type = "button";
-          btn.className = `px-3.5 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition ${
-            active ? "bg-slate-900 text-white shadow-xs" : "bg-slate-100 text-slate-600 hover:bg-slate-200"
-          }`;
-          btn.textContent = sub;
-          btn.addEventListener("click", () => {
-            state.activeSubject = sub;
-            savePersistentData();
-            renderSubjectTabs();
-            renderMaterialsList();
-            renderLiveClassesList();
-            renderStudyTrackerUI();
-            renderDiscussionFeed();
-          });
-          container.appendChild(btn);
-        });
-
-        document.querySelectorAll(".active-subj-name").forEach(el => {
-          el.textContent = state.activeSubject;
+      function renderFilters() {
+        const box = $("mat-filters"); box.innerHTML = "";
+        MAT_TYPES.forEach(f => {
+          const b = document.createElement("button");
+          b.type = "button";
+          b.className = `px-3 py-1 rounded-full text-xs font-bold whitespace-nowrap border ${S.filter === f ? "bg-brand-600 text-white border-brand-600" : "bg-white text-slate-600"}`;
+          b.textContent = f;
+          b.onclick = () => { S.filter = f; renderFilters(); renderMaterials(); };
+          box.appendChild(b);
         });
       }
 
-      function renderMaterialFilterPills() {
-        const container = document.getElementById("material-type-filters");
-        container.innerHTML = "";
-
-        MATERIAL_TYPES.forEach(type => {
-          const active = state.activeMaterialFilter === type;
-          const btn = document.createElement("button");
-          btn.type = "button";
-          btn.className = `px-3.5 py-1.5 rounded-full text-xs font-bold whitespace-nowrap border transition ${
-            active ? "bg-brand-600 text-white border-brand-600" : "bg-white text-slate-600 border-slate-200 hover:border-brand-300"
-          }`;
-          btn.textContent = type;
-          btn.addEventListener("click", () => {
-            state.activeMaterialFilter = type;
-            renderMaterialFilterPills();
-            renderMaterialsList();
-          });
-          container.appendChild(btn);
-        });
-      }
-
-      function renderMaterialsList() {
-        const container = document.getElementById("materials-container");
-        const matching = state.uploadedMaterials.filter(item => {
-          const sameCohort =
-            item.level === state.selectedLevel &&
-            item.course === state.selectedCourse &&
-            item.branch === state.selectedBranch &&
-            item.year === state.selectedYear &&
-            item.subject === state.activeSubject;
-          const sameType = state.activeMaterialFilter === "All" || item.type === state.activeMaterialFilter;
-          return sameCohort && sameType;
-        });
-
-        if (matching.length === 0) {
-          container.innerHTML = `
-            <div class="bg-white rounded-3xl border border-dashed border-slate-300 p-10 text-center">
-              <div class="w-14 h-14 rounded-2xl bg-slate-100 text-slate-500 flex items-center justify-center text-2xl mx-auto mb-3">📭</div>
-              <h3 class="font-extrabold text-slate-900 text-base">No Study Materials Uploaded Yet</h3>
-              <p class="text-xs sm:text-sm text-slate-500 max-w-md mx-auto mt-1">
-                Your subject teacher has not uploaded any <strong>${escapeHtml(state.activeMaterialFilter === 'All' ? 'Books, Notes, Formulas, PYQs, or Tests' : state.activeMaterialFilter)}</strong> for <strong>${escapeHtml(state.activeSubject)}</strong> yet.
-              </p>
-              <button type="button" id="empty-materials-teacher-btn" class="mt-4 px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold transition">
-                🔐 Teacher Login to Upload Materials
-              </button>
-            </div>
-          `;
-          document.getElementById("empty-materials-teacher-btn").addEventListener("click", openTeacherPinModal);
+      function renderMaterials() {
+        const list = S.materials.filter(m => m.level === S.level && m.course === S.course && m.branch === S.branch && m.year === S.year && m.subj === S.subj && (S.filter === "All" || m.type === S.filter));
+        const box = $("mat-list");
+        if (!list.length) {
+          box.innerHTML = `<div class="bg-white rounded-3xl border border-dashed border-slate-300 p-8 text-center"><p class="text-2xl mb-2">📭</p><h3 class="font-extrabold text-sm sm:text-base">No Study Materials Uploaded Yet</h3><p class="text-xs text-slate-500 mt-1">Teacher has not uploaded materials for <strong>${esc(S.subj)}</strong> yet.</p></div>`;
           return;
         }
-
-        const typeIcons = {
-          "Books": "📘",
-          "Notes": "📝",
-          "Formula": "📐",
-          "Short Notes": "⚡",
-          "Mindmaps": "🧠",
-          "PYQs": "📜",
-          "Model Paper": "📄",
-          "Tests": "✅"
-        };
-
         const grid = document.createElement("div");
-        grid.className = "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4";
-
-        matching.forEach(item => {
+        grid.className = "grid grid-cols-1 md:grid-cols-3 gap-4";
+        list.forEach(m => {
           const card = document.createElement("div");
-          card.className = "bg-white rounded-2xl border border-slate-200 p-5 flex flex-col justify-between hover:border-brand-300 transition shadow-xs";
-          card.innerHTML = `
-            <div>
-              <div class="flex items-center justify-between gap-2 mb-3">
-                <span class="px-2.5 py-1 rounded-lg bg-brand-50 text-brand-700 text-xs font-bold">
-                  ${typeIcons[item.type] || "📄"} ${escapeHtml(item.type)}
-                </span>
-                <span class="text-[11px] text-slate-400 font-medium">${escapeHtml(item.uploadedAt)}</span>
-              </div>
-              <h4 class="font-extrabold text-slate-900 text-sm sm:text-base leading-snug">${escapeHtml(item.title)}</h4>
-              <p class="text-xs text-slate-500 mt-1.5">By <strong class="text-slate-700">${escapeHtml(item.faculty)}</strong></p>
-              ${item.fileName ? `<p class="text-[11px] text-brand-600 font-semibold mt-1 truncate">📎 ${escapeHtml(item.fileName)}</p>` : ""}
-            </div>
-          `;
-
-          const openBtn = document.createElement("button");
-          openBtn.type = "button";
-          openBtn.className = `mt-5 w-full py-2.5 px-4 rounded-xl ${
-            item.type === "Tests" ? "bg-emerald-600 hover:bg-emerald-700" : "bg-slate-900 hover:bg-slate-800"
-          } text-white text-xs font-bold transition`;
-          openBtn.textContent = item.type === "Tests" ? `▶ Attempt MCQ Test (${item.questions.length} Qs)` : "📖 Open & Study";
-          openBtn.addEventListener("click", () => openMaterialViewer(item.id));
-
-          card.appendChild(openBtn);
+          card.className = "bg-white rounded-2xl border border-slate-200 p-4 flex flex-col justify-between";
+          card.innerHTML = `<div><span class="px-2 py-0.5 rounded bg-brand-50 text-brand-700 text-[11px] font-bold">${esc(m.type)}</span><h4 class="font-extrabold text-sm mt-2">${esc(m.title)}</h4><p class="text-xs text-slate-500 mt-1">By ${esc(m.faculty)}</p></div>`;
+          const btn = document.createElement("button");
+          btn.type = "button";
+          btn.className = `mt-4 w-full py-2 rounded-xl text-white text-xs font-bold ${m.type === "Tests" ? "bg-emerald-600" : "bg-slate-900"}`;
+          btn.textContent = m.type === "Tests" ? `▶ Start Test (${m.qs.length} Qs)` : "📖 Open";
+          btn.onclick = () => openViewer(m);
+          card.appendChild(btn);
           grid.appendChild(card);
         });
-
-        container.innerHTML = "";
-        container.appendChild(grid);
+        box.innerHTML = ""; box.appendChild(grid);
       }
 
-      function openMaterialViewer(materialId) {
-        const item = state.uploadedMaterials.find(m => m.id === materialId);
-        if (!item) return;
-
-        document.getElementById("viewer-badge").textContent = `${item.subject} • ${item.type}`;
-        document.getElementById("viewer-title").textContent = item.title;
-        document.getElementById("viewer-meta").textContent = `Published by ${item.faculty} • ${item.uploadedAt}`;
-
-        const body = document.getElementById("viewer-body");
-        body.innerHTML = "";
-
-        if (item.type === "Tests" && item.questions && item.questions.length > 0) {
-          const answers = new Array(item.questions.length).fill(null);
-
-          item.questions.forEach((q, qIdx) => {
-            const qCard = document.createElement("div");
-            qCard.className = "p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-2.5";
-            qCard.innerHTML = `
-              <p class="text-xs font-bold uppercase text-brand-600">Question ${qIdx + 1} of ${item.questions.length}</p>
-              <p class="font-bold text-slate-900 text-sm sm:text-base">${escapeHtml(q.question)}</p>
-            `;
-
-            const optsWrap = document.createElement("div");
-            optsWrap.className = "space-y-2";
-
-            q.options.forEach((optText, optIdx) => {
-              const optBtn = document.createElement("button");
-              optBtn.type = "button";
-              optBtn.className = `q-opt-${qIdx} w-full text-left p-3 rounded-xl border-2 border-slate-200 bg-white hover:border-brand-500 font-semibold text-xs sm:text-sm transition`;
-              optBtn.textContent = `${String.fromCharCode(65 + optIdx)}. ${optText}`;
-              optBtn.addEventListener("click", () => {
-                answers[qIdx] = optIdx;
-                document.querySelectorAll(`.q-opt-${qIdx}`).forEach((b, i) => {
-                  b.className = `q-opt-${qIdx} w-full text-left p-3 rounded-xl border-2 font-semibold text-xs sm:text-sm transition ${
-                    i === optIdx ? "border-brand-600 bg-brand-50 text-brand-800" : "border-slate-200 bg-white text-slate-700"
-                  }`;
-                });
-              });
-              optsWrap.appendChild(optBtn);
+      function openViewer(m) {
+        $("v-badge").textContent = `${m.subj} • ${m.type}`;
+        $("v-title").textContent = m.title;
+        const body = $("v-body"); body.innerHTML = "";
+        if (m.type === "Tests" && m.qs.length) {
+          const ans = Array(m.qs.length).fill(null);
+          m.qs.forEach((q, qi) => {
+            const d = document.createElement("div");
+            d.className = "p-3 rounded-2xl bg-slate-50 border space-y-2";
+            d.innerHTML = `<p class="font-bold text-xs sm:text-sm">Q${qi + 1}. ${esc(q.q)}</p>`;
+            q.opts.forEach((o, oi) => {
+              const ob = document.createElement("button");
+              ob.type = "button";
+              ob.className = `qo-${qi} w-full text-left p-2.5 rounded-xl border bg-white text-xs font-semibold`;
+              ob.textContent = `${String.fromCharCode(65 + oi)}. ${o}`;
+              ob.onclick = () => {
+                ans[qi] = oi;
+                document.querySelectorAll(`.qo-${qi}`).forEach((x, idx) => x.className = `qo-${qi} w-full text-left p-2.5 rounded-xl border text-xs font-semibold ${idx === oi ? "border-brand-600 bg-brand-50 text-brand-700" : "bg-white"}`);
+              };
+              d.appendChild(ob);
             });
-
-            qCard.appendChild(optsWrap);
-            body.appendChild(qCard);
+            body.appendChild(d);
           });
-
-          const submitTestBtn = document.createElement("button");
-          submitTestBtn.type = "button";
-          submitTestBtn.className = "w-full py-3 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm transition";
-          submitTestBtn.textContent = "Submit Test & Record Score";
-
-          const resultBox = document.createElement("div");
-          resultBox.className = "hidden p-4 rounded-2xl text-xs sm:text-sm font-bold";
-
-          submitTestBtn.addEventListener("click", () => {
-            let correctCount = 0;
-            item.questions.forEach((q, idx) => {
-              if (answers[idx] === q.correctIndex) correctCount += 1;
-            });
-            const scorePct = Math.round((correctCount / item.questions.length) * 100);
-
-            state.testsCompleted += 1;
-            state.totalTestScorePercent += scorePct;
-            syncStudentAnalyticsRecord();
-            savePersistentData();
-            renderStudyTrackerUI();
-
-            submitTestBtn.disabled = true;
-            submitTestBtn.classList.add("opacity-50", "cursor-not-allowed");
-            resultBox.classList.remove("hidden");
-            resultBox.className = "p-4 rounded-2xl text-xs sm:text-sm font-bold bg-emerald-100 text-emerald-900 border border-emerald-300";
-            resultBox.textContent = `✅ Test Submitted! You scored ${correctCount}/${item.questions.length} (${scorePct}%). Updated in Your Study Tracker.`;
-            showToast(`Test score (${scorePct}%) saved to Your Study Tracker!`, "success");
-          });
-
-          body.append(submitTestBtn, resultBox);
+          const sub = document.createElement("button");
+          sub.type = "button";
+          sub.className = "w-full py-3 rounded-xl bg-emerald-600 text-white font-bold text-xs";
+          sub.textContent = "Submit Test";
+          sub.onclick = () => {
+            let ok = 0;
+            m.qs.forEach((q, i) => { if (ans[i] === q.c) ok++; });
+            const pct = Math.round((ok / m.qs.length) * 100);
+            S.tests++; S.scoreSum += pct; syncStu(); save(); renderTracker();
+            sub.disabled = true; sub.textContent = `✅ Scored ${ok}/${m.qs.length} (${pct}%)`;
+            toast(`Score ${pct}% saved!`);
+          };
+          body.appendChild(sub);
         } else {
-          if (item.content) {
-            const textDiv = document.createElement("div");
-            textDiv.className = "whitespace-pre-wrap bg-slate-50 p-5 rounded-2xl border border-slate-200 text-slate-800 text-sm leading-relaxed";
-            textDiv.textContent = item.content;
-            body.appendChild(textDiv);
+          if (m.content) {
+            const p = document.createElement("div");
+            p.className = "whitespace-pre-wrap bg-slate-50 p-4 rounded-2xl border text-xs sm:text-sm";
+            p.textContent = m.content;
+            body.appendChild(p);
           }
-
-          if (item.fileUrl) {
-            const fileBox = document.createElement("div");
-            fileBox.className = "p-4 rounded-2xl bg-brand-50 border border-brand-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3";
-            fileBox.innerHTML = `
-              <div>
-                <p class="text-xs font-bold text-brand-900">📎 Attached Faculty File</p>
-                <p class="text-xs text-brand-700">${escapeHtml(item.fileName)}</p>
-              </div>
-              <a href="${item.fileUrl}" download="${escapeHtml(item.fileName)}"
-                class="px-4 py-2 rounded-xl bg-brand-600 hover:bg-brand-700 text-white text-xs font-bold text-center transition">
-                Download File
-              </a>
-            `;
-            body.appendChild(fileBox);
-
-            if (item.fileType && item.fileType.startsWith("image/")) {
-              const img = document.createElement("img");
-              img.src = item.fileUrl;
-              img.alt = item.title;
-              img.className = "w-full max-h-96 object-contain rounded-2xl border border-slate-200 bg-slate-50";
-              body.appendChild(img);
-            }
-          }
-
-          if (!item.content && !item.fileUrl) {
-            body.innerHTML = `<p class="text-slate-500 text-sm">No additional notes attached.</p>`;
+          if (m.fileUrl) {
+            const a = document.createElement("a");
+            a.href = m.fileUrl; a.download = m.fileName || "file";
+            a.className = "inline-block px-4 py-2 rounded-xl bg-brand-600 text-white text-xs font-bold";
+            a.textContent = `📎 Download ${m.fileName}`;
+            body.appendChild(a);
           }
         }
-
-        document.getElementById("modal-material-viewer").classList.remove("hidden");
+        $("mod-viewer").classList.remove("hidden");
       }
 
-      function closeMaterialViewer() {
-        document.getElementById("modal-material-viewer").classList.add("hidden");
-      }
-
-      // =====================================================================
-      // LIVE CLASSES
-      // =====================================================================
-      function renderLiveClassesList() {
-        const container = document.getElementById("live-classes-container");
-        const badge = document.getElementById("live-class-count-badge");
-
-        const matching = state.liveClasses.filter(lc =>
-          lc.level === state.selectedLevel &&
-          lc.course === state.selectedCourse &&
-          lc.branch === state.selectedBranch &&
-          lc.year === state.selectedYear &&
-          lc.subject === state.activeSubject
-        );
-
-        badge.textContent = `${matching.length} Live ${matching.length === 1 ? "Class" : "Classes"}`;
-
-        if (matching.length === 0) {
-          container.innerHTML = `
-            <div class="bg-white rounded-3xl border border-dashed border-slate-300 p-10 text-center">
-              <div class="w-14 h-14 rounded-2xl bg-rose-50 text-rose-500 flex items-center justify-center text-2xl mx-auto mb-3">🎥</div>
-              <h3 class="font-extrabold text-slate-900 text-base">No Live Classes Scheduled Right Now</h3>
-              <p class="text-xs sm:text-sm text-slate-500 max-w-md mx-auto mt-1">
-                When your <strong>${escapeHtml(state.activeSubject)}</strong> teacher starts a live lecture, it will appear right here.
-              </p>
-            </div>
-          `;
+      function renderLives() {
+        const list = S.lives.filter(l => l.level === S.level && l.course === S.course && l.branch === S.branch && l.year === S.year && l.subj === S.subj);
+        $("live-badge").textContent = `${list.length} Live`;
+        const box = $("live-list");
+        if (!list.length) {
+          box.innerHTML = `<div class="bg-white rounded-3xl border border-dashed border-slate-300 p-8 text-center"><p class="text-2xl mb-2">🎥</p><h3 class="font-extrabold text-sm">No Live Classes Scheduled Right Now</h3></div>`;
           return;
         }
-
-        const grid = document.createElement("div");
-        grid.className = "grid grid-cols-1 md:grid-cols-2 gap-4";
-
-        matching.forEach(lc => {
-          const card = document.createElement("div");
-          card.className = "bg-white rounded-2xl border border-rose-200 p-5 shadow-xs flex flex-col justify-between";
-          card.innerHTML = `
-            <div>
-              <div class="flex items-center justify-between mb-2">
-                <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-rose-100 text-rose-700 text-[11px] font-extrabold">
-                  <span class="w-2 h-2 rounded-full bg-rose-600 animate-ping"></span> LIVE NOW
-                </span>
-                <span class="text-xs text-slate-400">${escapeHtml(lc.startedAt)}</span>
-              </div>
-              <h4 class="font-extrabold text-slate-900 text-base">${escapeHtml(lc.topic)}</h4>
-              <p class="text-xs text-slate-500 mt-1">Faculty: <strong class="text-slate-700">${escapeHtml(lc.teacher)}</strong></p>
-            </div>
-          `;
-
-          const joinBtn = document.createElement("button");
-          joinBtn.type = "button";
-          joinBtn.className = "mt-4 w-full py-2.5 px-4 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold transition";
-          joinBtn.textContent = "▶ Join Live Class & Start Study Timer";
-          joinBtn.addEventListener("click", () => openLiveClassroomModal(lc));
-
-          card.appendChild(joinBtn);
-          grid.appendChild(card);
+        box.innerHTML = "";
+        list.forEach(l => {
+          const d = document.createElement("div");
+          d.className = "bg-white rounded-2xl border border-rose-200 p-4 flex justify-between items-center gap-3";
+          d.innerHTML = `<div><span class="text-[10px] font-extrabold text-rose-600">🔴 LIVE NOW</span><h4 class="font-extrabold text-sm">${esc(l.topic)}</h4><p class="text-xs text-slate-500">By ${esc(l.teacher)}</p></div>`;
+          const b = document.createElement("button");
+          b.type = "button";
+          b.className = "px-4 py-2 rounded-xl bg-rose-600 text-white text-xs font-bold shrink-0";
+          b.textContent = "Join Class";
+          b.onclick = () => {
+            if (!S.running) toggleClock();
+            $("v-badge").textContent = `🔴 LIVE • ${l.subj}`;
+            $("v-title").textContent = l.topic;
+            $("v-body").innerHTML = `<div class="p-6 rounded-2xl bg-slate-900 text-white text-center space-y-2"><p class="font-extrabold text-base">${esc(l.topic)}</p><p class="text-xs text-slate-300">Faculty: ${esc(l.teacher)} • Stopwatch running automatically</p></div>`;
+            $("mod-viewer").classList.remove("hidden");
+          };
+          d.appendChild(b); box.appendChild(d);
         });
-
-        container.innerHTML = "";
-        container.appendChild(grid);
       }
 
-      function openLiveClassroomModal(lc) {
-        if (!state.timerRunning) {
-          toggleStudyTimer();
+      // STOPWATCH & TRACKER
+      function fmtHMS(s) {
+        return [Math.floor(s / 3600), Math.floor((s % 3600) / 60), s % 60].map(n => String(n).padStart(2, "0")).join(":");
+      }
+
+      function updateClocks() {
+        const txt = fmtHMS(S.secs);
+        $("top-clock").textContent = txt;
+        $("trk-clock").textContent = txt;
+        $("top-clock-toggle").textContent = S.running ? "⏸" : "▶";
+        $("trk-toggle").textContent = S.running ? "⏸ Pause" : "▶ Start Clock";
+        $("trk-clock-status").textContent = S.running ? `Counting for ${S.subj}...` : (S.secs ? `Paused at ${txt}` : "Not started yet (0s)");
+      }
+
+      function toggleClock() {
+        if (S.running) { clearInterval(S.iv); S.running = false; }
+        else { S.running = true; S.iv = setInterval(() => { S.secs++; updateClocks(); }, 1000); }
+        updateClocks();
+      }
+
+      function saveClock() {
+        if (!S.secs) return toast("Start stopwatch first!");
+        if (S.running) { clearInterval(S.iv); S.running = false; }
+        const m = Math.max(1, Math.round(S.secs / 60));
+        S.secs = 0; updateClocks(); addMins(m);
+      }
+
+      function addMins(m) {
+        S.minsToday += m;
+        S.subjMins[S.subj] = (S.subjMins[S.subj] || 0) + m;
+        if (!S.streak) S.streak = 1;
+        syncStu(); save(); renderTracker();
+        toast(`Saved ${m} min(s) to ${S.subj}!`);
+      }
+
+      function syncStu() {
+        const st = S.students.find(x => x.name === S.name);
+        if (st) { st.mins = S.minsToday; st.tests = S.tests; st.avg = S.tests ? Math.round(S.scoreSum / S.tests) : 0; }
+      }
+
+      function renderTracker() {
+        $("mini-mins").textContent = `${S.minsToday} mins`;
+        $("st-mins").textContent = `${S.minsToday} mins`;
+        $("st-tests").textContent = S.tests;
+        $("st-avg").textContent = `Avg Score: ${S.tests ? Math.round(S.scoreSum / S.tests) : 0}%`;
+        $("st-streak").textContent = `${S.streak} ${S.streak === 1 ? "Day" : "Days"}`;
+        $("st-planner").textContent = `${S.tasks.filter(t => t.done).length} / ${S.tasks.length}`;
+        const pct = Math.min(100, Math.round((S.minsToday / 240) * 100));
+        $("goal-heading").textContent = `Daily Goal Progress (${S.minsToday} / 240 mins)`;
+        $("goal-pct").textContent = `${pct}%`;
+        $("goal-bar").style.width = `${pct}%`;
+
+        const subs = S.joined ? DATA[S.level].courses[S.course].branches[S.branch] : [];
+        $("subj-breakdown").innerHTML = subs.map(s => {
+          const m = S.subjMins[s] || 0;
+          const p = S.minsToday ? Math.round((m / S.minsToday) * 100) : 0;
+          return `<div><div class="flex justify-between text-xs font-bold mb-1"><span>${esc(s)}</span><span class="font-mono">${m}m (${p}%)</span></div><div class="h-2 bg-slate-100 rounded-full"><div class="h-full bg-brand-600 rounded-full" style="width:${p}%"></div></div></div>`;
+        }).join("");
+      }
+
+      // 3 DISCUSSION ROOMS
+      function switchRoom(r) {
+        S.room = r;
+        const cfg = {
+          students_only: { b: "border-emerald-500 bg-emerald-50/70", h: "bg-emerald-900", t: `1. Students-Only Room (${S.subj})`, s: "No Teachers Allowed" },
+          teacher_student: { b: "border-brand-500 bg-brand-50/70", h: "bg-brand-900", t: `2. Teacher-Student Room (${S.subj})`, s: "Students + Faculty" },
+          all_department: { b: "border-violet-500 bg-violet-50/70", h: "bg-violet-900", t: "3. All Dept All Students", s: `${S.course} (${S.branch})` }
+        };
+        ["students_only", "teacher_student", "all_department"].forEach(k => {
+          $(`rcard-${k}`).className = `room-btn text-left p-4 rounded-2xl border-2 ${k === r ? cfg[k].b : "border-slate-200 bg-white"}`;
+        });
+        $("chat-hdr").className = `px-5 py-3 ${cfg[r].h} text-white flex items-center justify-between`;
+        $("chat-title").textContent = cfg[r].t;
+        $("chat-sub").textContent = cfg[r].s;
+        renderChat();
+      }
+
+      function roomKey() {
+        return S.room === "all_department" ? `${S.level}|${S.course}|${S.branch}` : `${S.level}|${S.course}|${S.branch}|${S.year}|${S.subj}`;
+      }
+
+      function renderChat() {
+        const k = roomKey();
+        if (!S.msgs[S.room][k]) S.msgs[S.room][k] = [];
+        const list = S.msgs[S.room][k];
+        const feed = $("chat-feed");
+        if (!list.length) { feed.innerHTML = `<p class="text-xs text-slate-400 text-center py-12">No messages yet. Say hi!</p>`; return; }
+        feed.innerHTML = list.map(m => `
+          <div class="flex flex-col ${m.sender === S.name && !m.t ? "items-end" : "items-start"}">
+            <span class="text-[10px] font-bold text-slate-500 mb-0.5">${esc(m.sender)} ${m.t ? '<span class="px-1 rounded bg-amber-100 text-amber-800">FACULTY</span>' : ""} • ${esc(m.time)}</span>
+            <div class="px-3.5 py-2 rounded-2xl text-xs sm:text-sm max-w-[80%] ${m.t ? "bg-amber-50 border border-amber-200" : m.sender === S.name ? "bg-brand-600 text-white" : "bg-white border"}">${esc(m.text)}</div>
+          </div>`).join("");
+        feed.scrollTop = feed.scrollHeight;
+      }
+
+      // PLANNER & PROFILE
+      function updatePlannerBadge() { $("planner-count").textContent = S.tasks.filter(t => !t.done).length; }
+      function renderPlanner() {
+        const box = $("planner-list"); box.innerHTML = "";
+        if (!S.tasks.length) { box.innerHTML = `<p class="text-xs text-slate-400 text-center py-6">No goals added yet.</p>`; return; }
+        S.tasks.forEach(t => {
+          const row = document.createElement("div");
+          row.className = "flex items-center justify-between p-2.5 rounded-xl border bg-slate-50 text-xs";
+          const b = document.createElement("button");
+          b.type = "button"; b.className = `text-left flex-1 font-semibold ${t.done ? "line-through text-slate-400" : ""}`;
+          b.textContent = `${t.done ? "✅" : "⬜"} ${t.title}`;
+          b.onclick = () => { t.done = !t.done; save(); updatePlannerBadge(); renderPlanner(); };
+          const d = document.createElement("button");
+          d.type = "button"; d.className = "text-rose-600 font-bold px-2"; d.textContent = "✕";
+          d.onclick = () => { S.tasks = S.tasks.filter(x => x.id !== t.id); save(); updatePlannerBadge(); renderPlanner(); };
+          row.append(b, d); box.appendChild(row);
+        });
+      }
+
+      // TEACHER PORTAL
+      function fillCascades(p) {
+        const lEl = $(`${p}-level`), cEl = $(`${p}-course`), bEl = $(`${p}-branch`), yEl = $(`${p}-year`), sEl = $(`${p}-subject`);
+        lEl.innerHTML = Object.keys(DATA).map(l => `<option>${esc(l)}</option>`).join("");
+        if (S.level) lEl.value = S.level;
+        const syncC = () => {
+          cEl.innerHTML = Object.keys(DATA[lEl.value].courses).map(c => `<option>${esc(c)}</option>`).join("");
+          yEl.innerHTML = DATA[lEl.value].years.map(y => `<option>${esc(y)}</option>`).join("");
+          syncB();
+        };
+        const syncB = () => {
+          bEl.innerHTML = Object.keys(DATA[lEl.value].courses[cEl.value].branches).map(b => `<option>${esc(b)}</option>`).join("");
+          syncS();
+        };
+        const syncS = () => {
+          sEl.innerHTML = DATA[lEl.value].courses[cEl.value].branches[bEl.value].map(s => `<option>${esc(s)}</option>`).join("");
+          if (p === "ct") renderTChat();
+        };
+        lEl.onchange = syncC; cEl.onchange = syncB; bEl.onchange = syncS; yEl.onchange = () => { if (p === "ct") renderTChat(); }; sEl.onchange = () => { if (p === "ct") renderTChat(); };
+        syncC();
+      }
+
+      function addQBlock() {
+        S.qCount++;
+        const d = document.createElement("div");
+        d.className = "q-blk p-3 rounded-xl bg-white border space-y-2 text-xs";
+        d.innerHTML = `<input class="qq w-full p-2 border rounded-lg" placeholder="Question ${S.qCount}" /><div class="grid grid-cols-2 gap-1.5"><input class="qo0 p-1.5 border rounded" placeholder="Option A" /><input class="qo1 p-1.5 border rounded" placeholder="Option B" /><input class="qo2 p-1.5 border rounded" placeholder="Option C" /><input class="qo3 p-1.5 border rounded" placeholder="Option D" /></div><select class="qc p-1.5 border rounded font-bold"><option value="0">Correct: A</option><option value="1">Correct: B</option><option value="2">Correct: C</option><option value="3">Correct: D</option></select>`;
+        $("quiz-q-list").appendChild(d);
+      }
+
+      function renderAnalytics() {
+        $("ta-stu").textContent = S.students.length;
+        $("ta-min").textContent = `${S.students.reduce((a, b) => a + b.mins, 0)} mins`;
+        $("ta-mat").textContent = S.materials.length;
+        $("ta-liv").textContent = S.lives.length;
+        $("ta-table").innerHTML = !S.students.length
+          ? `<p class="p-6 text-center text-xs text-slate-500">No students checked in yet.</p>`
+          : `<table class="w-full text-left text-xs"><thead class="bg-slate-50 border-b"><tr><th class="p-3">Student</th><th class="p-3">Section</th><th class="p-3">Study Mins</th><th class="p-3">Tests</th><th class="p-3">Avg</th></tr></thead><tbody>${S.students.map(s => `<tr class="border-b"><td class="p-3 font-bold">${esc(s.name)}</td><td class="p-3">${esc(s.cohort)}</td><td class="p-3 font-mono font-bold text-brand-600">${s.mins} mins</td><td class="p-3">${s.tests}</td><td class="p-3">${s.avg}%</td></tr>`).join("")}</tbody></table>`;
+      }
+
+      function tRoomKey() {
+        const k = `${$("ct-level").value}|${$("ct-course").value}|${$("ct-branch").value}|${$("ct-year").value}|${$("ct-subject").value}`;
+        $("tchat-lbl").textContent = `${$("ct-subject").value} (${$("ct-year").value})`;
+        return k;
+      }
+
+      function renderTChat() {
+        const k = tRoomKey();
+        if (!S.msgs.teacher_student[k]) S.msgs.teacher_student[k] = [];
+        const list = S.msgs.teacher_student[k];
+        $("tchat-feed").innerHTML = !list.length ? `<p class="text-xs text-slate-400 text-center py-10">No messages yet.</p>` : list.map(m => `<div class="flex flex-col ${m.t ? "items-end" : "items-start"}"><span class="text-[10px] font-bold text-slate-500">${esc(m.sender)} • ${esc(m.time)}</span><div class="px-3 py-2 rounded-2xl text-xs ${m.t ? "bg-slate-900 text-white" : "bg-white border"}">${esc(m.text)}</div></div>`).join("");
+      }
+
+      // INIT BINDINGS
+      function init() {
+        load();
+        $("btn-home").onclick = $("btn-change-sec").onclick = () => { $("view-student").classList.add("hidden"); $("view-teacher").classList.add("hidden"); $("view-wizard").classList.remove("hidden"); renderWizard(); };
+        $("btn-enter-workspace").onclick = () => { S.name = $("inp-student-name").value.trim() || S.name || "Student"; S.joined = true; openWorkspace(); };
+
+        $("top-clock-toggle").onclick = $("trk-toggle").onclick = toggleClock;
+        $("top-clock-save").onclick = $("trk-save").onclick = saveClock;
+        $("form-manual-mins").onsubmit = e => { e.preventDefault(); const v = +$("inp-manual-mins").value; if (v > 0) { $("inp-manual-mins").value = ""; addMins(v); } };
+
+        document.querySelectorAll(".bnav-btn").forEach(b => b.onclick = () => switchTab(b.dataset.tab));
+        document.querySelectorAll(".room-btn").forEach(b => b.onclick = () => switchRoom(b.dataset.room));
+        $("form-student-chat").onsubmit = e => {
+          e.preventDefault();
+          const txt = $("inp-student-chat").value.trim(); if (!txt) return;
+          const k = roomKey(); if (!S.msgs[S.room][k]) S.msgs[S.room][k] = [];
+          S.msgs[S.room][k].push({ sender: S.name, t: false, text: txt, time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) });
+          $("inp-student-chat").value = ""; save(); renderChat();
+        };
+
+        $("btn-planner").onclick = $("btn-tracker-planner").onclick = () => { renderPlanner(); $("mod-planner").classList.remove("hidden"); };
+        $("close-planner").onclick = () => { $("mod-planner").classList.add("hidden"); renderTracker(); };
+        $("form-planner").onsubmit = e => { e.preventDefault(); const t = $("inp-planner").value.trim(); if (t) { S.tasks.push({ id: Date.now(), title: t, done: false }); $("inp-planner").value = ""; save(); updatePlannerBadge(); renderPlanner(); } };
+
+        $("btn-profile").onclick = () => {
+          $("prof-name").textContent = S.name;
+          $("prof-cohort").textContent = `${S.level} • ${S.course} • ${S.branch} (${S.year})`;
+          $("prof-mins").textContent = `${S.minsToday} mins`;
+          $("prof-tests").textContent = S.tests;
+          $("prof-streak").textContent = `${S.streak} Days`;
+          $("mod-profile").classList.remove("hidden");
+        };
+        $("close-profile").onclick = () => $("mod-profile").classList.add("hidden");
+        $("prof-sec-btn").onclick = () => { $("mod-profile").classList.add("hidden"); $("btn-home").click(); };
+        $("prof-tch-btn").onclick = () => { $("mod-profile").classList.add("hidden"); $("btn-teacher-modal").click(); };
+
+        $("btn-teacher-modal").onclick = () => { if (S.teacherAuth) enterTeacher(); else { $("inp-pin").value = ""; $("mod-pin").classList.remove("hidden"); } };
+        $("cancel-pin").onclick = () => $("mod-pin").classList.add("hidden");
+        $("form-pin").onsubmit = e => {
+          e.preventDefault();
+          if ($("inp-pin").value.trim() === PIN) { S.teacherAuth = true; $("mod-pin").classList.add("hidden"); enterTeacher(); toast("Teacher Portal Unlocked!"); }
+          else toast("Wrong PIN! Use 2026.", false);
+        };
+
+        function enterTeacher() {
+          $("view-wizard").classList.add("hidden"); $("view-student").classList.add("hidden"); $("view-teacher").classList.remove("hidden");
+          fillCascades("up"); fillCascades("lv"); fillCascades("ct");
+          if (!$("quiz-q-list").children.length) addQBlock();
+          renderAnalytics(); renderTChat();
         }
 
-        document.getElementById("viewer-badge").textContent = `🔴 LIVE LECTURE • ${lc.subject}`;
-        document.getElementById("viewer-title").textContent = lc.topic;
-        document.getElementById("viewer-meta").textContent = `Host: ${lc.teacher} • Study Stopwatch Running`;
+        $("btn-exit-teacher").onclick = () => { $("view-teacher").classList.add("hidden"); if (S.joined) openWorkspace(true); else { $("view-wizard").classList.remove("hidden"); renderWizard(); } };
+        $("btn-reset-all").onclick = () => { localStorage.removeItem(KEY); location.reload(); };
+        $("btn-sync-link").onclick = () => {
+          const url = `${location.href.split("#")[0]}#sync=${btoa(unescape(encodeURIComponent(JSON.stringify({ materials: S.materials.map(m => ({ ...m, fileUrl: null })), lives: S.lives }))))}`;
+          if (navigator.clipboard) navigator.clipboard.writeText(url).then(() => toast("Sync Link Copied!"));
+        };
 
-        const body = document.getElementById("viewer-body");
-        body.innerHTML = `
-          <div class="rounded-2xl bg-slate-900 text-white p-6 text-center space-y-3">
-            <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-rose-600/20 border border-rose-500/40 text-rose-300 text-xs font-bold">
-              <span class="w-2 h-2 rounded-full bg-rose-500 animate-ping"></span> Connected to Live Classroom
-            </div>
-            <h4 class="text-lg sm:text-xl font-extrabold">${escapeHtml(lc.topic)}</h4>
-            <p class="text-xs text-slate-300">Instructor: <strong>${escapeHtml(lc.teacher)}</strong> • ${escapeHtml(lc.subject)}</p>
-            <div class="my-4 py-8 px-4 rounded-xl bg-slate-800/90 border border-slate-700">
-              <p class="text-sm font-semibold text-indigo-300">📡 Live Lecture Stream & Interactive Board Active</p>
-              <p class="text-xs text-slate-400 mt-1">Your study stopwatch in the top-right corner is automatically recording your attendance time.</p>
-            </div>
-            <div class="flex items-center justify-center gap-3 pt-2">
-              <button type="button" id="live-raise-hand-btn" class="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-extrabold transition">
-                ✋ Raise Hand for Doubt
-              </button>
-            </div>
-          </div>
-        `;
-
-        document.getElementById("live-raise-hand-btn").addEventListener("click", () => {
-          showToast(`Hand raised! ${lc.teacher} has been notified of your doubt.`, "info");
+        document.querySelectorAll(".tnav-btn").forEach(b => b.onclick = () => {
+          const t = b.dataset.ttab;
+          ["upload", "host", "analytics", "fchat"].forEach(k => {
+            $(`tsec-${k}`).classList.toggle("hidden", k !== t);
+            $(`ttab-${k}`).className = `tnav-btn py-2 px-3 rounded-xl text-xs font-bold ${k === t ? "bg-white text-slate-900" : "text-slate-600"}`;
+          });
+          if (t === "analytics") renderAnalytics();
+          if (t === "fchat") renderTChat();
         });
 
-        document.getElementById("modal-material-viewer").classList.remove("hidden");
-        showToast(`Joined "${lc.topic}"! Stopwatch started automatically.`, "success");
+        $("up-type").onchange = () => {
+          const isT = $("up-type").value === "Tests";
+          $("up-std-box").classList.toggle("hidden", isT);
+          $("up-quiz-box").classList.toggle("hidden", !isT);
+        };
+        $("btn-add-q").onclick = addQBlock;
+
+        $("form-upload").onsubmit = async e => {
+          e.preventDefault();
+          const type = $("up-type").value, file = $("up-file").files[0];
+          let fileUrl = null, fileName = null;
+          if (file) {
+            if (file.size > 1.5 * 1024 * 1024) return toast("Keep file under 1.5 MB", false);
+            fileName = file.name;
+            fileUrl = await new Promise(res => { const r = new FileReader(); r.onload = () => res(r.result); r.readAsDataURL(file); });
+          }
+          const qs = [];
+          if (type === "Tests") {
+            document.querySelectorAll(".q-blk").forEach(b => {
+              const q = b.querySelector(".qq").value.trim();
+              if (q) qs.push({ q, opts: [0, 1, 2, 3].map(i => b.querySelector(`.qo${i}`).value.trim() || `Opt ${i + 1}`), c: +b.querySelector(".qc").value });
+            });
+            if (!qs.length) return toast("Add at least 1 question!", false);
+          }
+          S.materials.unshift({
+            id: Date.now(), level: $("up-level").value, course: $("up-course").value, branch: $("up-branch").value,
+            year: $("up-year").value, subj: $("up-subject").value, type, faculty: $("up-faculty").value.trim(),
+            title: $("up-title").value.trim(), content: $("up-content").value.trim(), fileUrl, fileName, qs
+          });
+          save(); $("up-title").value = ""; $("up-content").value = ""; $("up-file").value = ""; renderAnalytics();
+          toast("Material published!");
+        };
+
+        $("form-live").onsubmit = e => {
+          e.preventDefault();
+          S.lives.unshift({
+            id: Date.now(), level: $("lv-level").value, course: $("lv-course").value, branch: $("lv-branch").value,
+            year: $("lv-year").value, subj: $("lv-subject").value, topic: $("lv-topic").value.trim(), teacher: $("lv-teacher").value.trim()
+          });
+          save(); $("lv-topic").value = ""; renderAnalytics(); toast("Live class started!");
+        };
+
+        $("form-teacher-chat").onsubmit = e => {
+          e.preventDefault();
+          const txt = $("inp-teacher-chat").value.trim(); if (!txt) return;
+          const k = tRoomKey(); if (!S.msgs.teacher_student[k]) S.msgs.teacher_student[k] = [];
+          S.msgs.teacher_student[k].push({ sender: "Teacher", t: true, text: txt, time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) });
+          $("inp-teacher-chat").value = ""; save(); renderTChat();
+        };
+
+        $("close-viewer").onclick = () => $("mod-viewer").classList.add("hidden");
+
+        if (S.joined && DATA[S.level]?.courses[S.course]?.branches[S.branch]) openWorkspace(true);
+        else renderWizard();
       }
 
-      // =====================================================================
-      // STUDY STOPWATCH & TRACKER (STARTS AT ALL ZEROS)
-      // =====================================================================
-      function formatHMS(totalSeconds) {
-        const hrs = String(Math.floor(totalSeconds / 3600)).padStart(2, "0");
-        const mins = String(Math.floor((totalSeconds % 3600) / 60)).padStart(2, "0");
-        const secs = String(totalSeconds % 60).padStart(2, "0");
-        return `${hrs}:${mins}:${secs}`;
-      }
-
-      function updateStopwatchDisplays() {
-        const formatted = formatHMS(state.timerSeconds);
-        document.getElementById("topbar-stopwatch-display").textContent = formatted;
-        document.getElementById("tracker-stopwatch-display").textContent = formatted;
-
-        const topToggle = document.getElementById("topbar-stopwatch-toggle");
-        const trackerToggle = document.getElementById("tracker-toggle-btn");
-        const statusText = document.getElementById("tracker-stopwatch-status");
-
-        if (state.timerRunning) {
-          topToggle.textContent = "⏸";
-          trackerToggle.textCon
-            </script>
-  </body>
-            </html>
+      if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init);
+      else init();
+    })();
+  </script>
+</body>
+</html>
